@@ -1,0 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
+import 'package:micro_teaching_studio/app/app_prefs.dart';
+import 'package:micro_teaching_studio/common/data_source/generic_data_source.dart';
+import 'package:micro_teaching_studio/common/http/api_consumer.dart';
+import 'package:micro_teaching_studio/common/network/network_info.dart';
+import 'package:micro_teaching_studio/features/auth/cubit/auth_cubit.dart';
+import 'package:micro_teaching_studio/features/auth/data/auth_remote_data_source.dart';
+import 'package:micro_teaching_studio/features/auth/data/auth_repository.dart';
+import 'package:micro_teaching_studio/features/pronunciation_assessment/cubit/pronunciation_cubit.dart';
+import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pronunciation_engine.dart';
+import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'app_constants.dart';
+
+part "di.dart";
