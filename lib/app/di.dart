@@ -74,10 +74,33 @@ Future<void> initAppModule() async {
     () => SpeechConfigRepository(instance<FirebaseFirestore>()),
   );
   instance.registerFactory<PronunciationEngine>(() => PronunciationEngine());
+  instance.registerLazySingleton<CourseAudioCubit>(() => CourseAudioCubit());
+  instance.registerLazySingleton<AnalyticsRepository>(
+    () => AnalyticsRepository(
+      instance<FirebaseFirestore>(),
+      instance<AppPreferences>(),
+      instance<FirebaseAuth>(),
+    ),
+  );
+  instance.registerLazySingleton<CourseProgressStore>(
+    () => CourseProgressStore(
+      instance<SharedPreferences>(),
+      instance<AppPreferences>(),
+    ),
+  );
+  instance.registerLazySingleton<CourseProgressCubit>(
+    () => CourseProgressCubit(
+      instance<CourseProgressStore>(),
+      instance<AnalyticsRepository>(),
+    ),
+  );
   instance.registerFactory<PronunciationCubit>(
     () => PronunciationCubit(
       instance<SpeechConfigRepository>(),
       instance<PronunciationEngine>(),
+      instance<AnalyticsRepository>(),
+      instance<CourseProgressCubit>(),
+      instance<CourseAudioCubit>(),
     ),
   );
 }

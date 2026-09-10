@@ -1,14 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
-import 'package:micro_teaching_studio/common/resources/app_router.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/common/widgets/default_button_widget.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_svg_icon.dart';
 import 'package:micro_teaching_studio/features/splash/widgets/help_intro_card.dart';
@@ -23,13 +22,11 @@ class HelpPage extends StatelessWidget {
     return CourseScaffold(
       voiceCode: CourseConstants.helpVoiceCode,
       title: AppStrings.helpEnglishTitle.tr(),
-      titleAr: AppStrings.helpArabicTitle.tr(),
       currentIndex: CourseConstants.helpStepIndex,
       bodyGradient: ColorManager.gradientHelpSurface,
-      onClose: () => _goToLogin(context),
-      onSkip: () => _goToLogin(context),
-      onBack: () => _popIfPossible(context),
-      onNext: () => _goToLogin(context),
+      onBack: () => CourseFlow.back(context),
+      onNext: () => CourseFlow.next(context),
+      backEnabled: CourseFlow.hasPrevious(context),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
           AppPadding.p16.w,
@@ -57,7 +54,7 @@ class HelpPage extends StatelessWidget {
               height: AppSize.s56.h,
               width: double.infinity,
               child: DefaultButtonWidget(
-                onPressed: () => _goToLogin(context),
+                onPressed: () => CourseFlow.next(context),
                 color: ColorManager.navy,
                 radius: AppRadius.r16.r,
                 elevation: 0,
@@ -84,14 +81,6 @@ class HelpPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _goToLogin(BuildContext context) {
-    context.push(AppRouters.loginView);
-  }
-
-  void _popIfPossible(BuildContext context) {
-    if (context.canPop()) context.pop();
   }
 }
 

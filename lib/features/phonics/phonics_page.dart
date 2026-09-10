@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,7 +10,10 @@ import 'package:micro_teaching_studio/app/imports.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
+import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
+import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_word.dart';
 import 'package:micro_teaching_studio/features/phonics/widgets/phonics_banner.dart';
@@ -28,10 +33,25 @@ class _PhonicsPageState extends State<PhonicsPage> {
   int _selectedIndex = 0;
 
   @override
+  void dispose() {
+    unawaited(instance<CourseAudioCubit>().stop());
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final word = PhonicsWord.catalog[_selectedIndex];
-    return BlocProvider(
-      create: (_) => instance<PronunciationCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) {
+            final cubit = instance<PronunciationCubit>();
+            unawaited(cubit.restore(_partFor(0)));
+            return cubit;
+          },
+        ),
+        BlocProvider.value(value: instance<CourseAudioCubit>()),
+      ],
       child: BlocListener<PronunciationCubit, PronunciationState>(
         listenWhen: (previous, current) =>
             current.status == PronunciationStatus.failure &&
@@ -48,11 +68,8 @@ class _PhonicsPageState extends State<PhonicsPage> {
           title: AppStrings.phonicsEnglishTitle.tr(),
           currentIndex: CourseConstants.phonicsStepIndex,
           bodyGradient: ColorManager.gradientFluencySurface,
-          onClose: _popIfPossible,
-          onHelp: _popIfPossible,
-          onSkip: _popIfPossible,
-          onBack: _popIfPossible,
-          onNext: _popIfPossible,
+          onBack: () => CourseFlow.back(context),
+          onNext: () => CourseFlow.next(context),
           body: ListView(
             padding: EdgeInsets.fromLTRB(
               AppPadding.p16.w,
@@ -75,8 +92,12 @@ class _PhonicsPageState extends State<PhonicsPage> {
                       word: PhonicsWord.catalog[index],
                       isSelected: index == _selectedIndex,
                       onTap: () {
-                        context.read<PronunciationCubit>().resetScore();
                         setState(() => _selectedIndex = index);
+                        unawaited(
+                          context.read<PronunciationCubit>().restore(
+                                _partFor(index),
+                              ),
+                        );
                       },
                     );
                   },
@@ -91,8 +112,14 @@ class _PhonicsPageState extends State<PhonicsPage> {
                       context.read<PronunciationCubit>().toggle(
                             referenceText: word.wordKey.tr(),
                             enableProsody: false,
+                            part: AssessmentPartContext.phonics(
+                              word: word,
+                              referenceText: word.wordKey.tr(),
+                              referenceIpa: word.ipaKey.tr(),
+                            ),
                           );
                     },
+                    onNext: () => _goNext(context),
                   );
                 },
               ),
@@ -103,9 +130,26 @@ class _PhonicsPageState extends State<PhonicsPage> {
     );
   }
 
-  void _popIfPossible() {
-    if (context.canPop()) context.pop();
+  Future<void> _goNext(BuildContext context) async {
+    if (_selectedIndex < PhonicsWord.catalog.length - 1) {
+      final next = _selectedIndex + 1;
+      setState(() => _selectedIndex = next);
+      if (!context.mounted) return;
+      await context.read<PronunciationCubit>().restore(_partFor(next));
+      return;
+    }
+    CourseFlow.next(context);
   }
+
+  AssessmentPartContext _partFor(int index) {
+    final word = PhonicsWord.catalog[index];
+    return AssessmentPartContext.phonics(
+      word: word,
+      referenceText: word.wordKey.tr(),
+      referenceIpa: word.ipaKey.tr(),
+    );
+  }
+
 }
 
 class PhonicsView extends PhonicsPage {

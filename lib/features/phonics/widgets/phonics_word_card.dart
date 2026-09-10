@@ -2,16 +2,20 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
+import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
+import 'package:micro_teaching_studio/features/course_audio/widgets/course_listen_control.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_svg_icon.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_rating.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_word.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/cubit/pronunciation_cubit.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/cubit/pronunciation_state.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/pronunciation_ui.dart';
+import 'package:micro_teaching_studio/features/pronunciation_assessment/widgets/pronunciation_attempt_bar.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
 class PhonicsWordCard extends StatelessWidget {
@@ -19,10 +23,12 @@ class PhonicsWordCard extends StatelessWidget {
     super.key,
     required this.word,
     required this.onSpeak,
+    required this.onNext,
   });
 
   final PhonicsWord word;
   final VoidCallback onSpeak;
+  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -54,13 +60,20 @@ class PhonicsWordCard extends StatelessWidget {
                 ).copyWith(letterSpacing: AppLetterSpacing.label),
               ),
               SizedBox(height: AppPadding.p8.h),
-              Text(
-                word.wordKey.tr(),
-                textAlign: TextAlign.center,
-                style: getExtraBoldStyle(
-                  fontSize: FontSize.s32.sp,
-                  color: pronunciationBandColor(state.band, ColorManager.navy),
-                ).copyWith(letterSpacing: AppLetterSpacing.display),
+              GestureDetector(
+                onTap: !state.isRecording && !state.isAssessing
+                    ? () => context.read<CourseAudioCubit>().toggle(
+                          AudioAssets.phonicsClip(word.wordKey.tr()),
+                        )
+                    : null,
+                child: Text(
+                  word.wordKey.tr(),
+                  textAlign: TextAlign.center,
+                  style: getExtraBoldStyle(
+                    fontSize: FontSize.s32.sp,
+                    color: pronunciationBandColor(state.band, ColorManager.navy),
+                  ).copyWith(letterSpacing: AppLetterSpacing.display),
+                ),
               ),
               SizedBox(height: AppPadding.p8.h),
               Text.rich(
@@ -77,6 +90,12 @@ class PhonicsWordCard extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: AppPadding.p24.h),
+              CourseListenControl(
+                asset: AudioAssets.phonicsClip(word.wordKey.tr()),
+                color: ColorManager.actionBlue,
+                enabled: !state.isRecording && !state.isAssessing,
+              ),
+              SizedBox(height: AppPadding.p24.h),
               CourseCircleIconButton(
                 asset: Assets.assetsIconsSessionMic,
                 size: AppSize.s72.w,
@@ -85,7 +104,7 @@ class PhonicsWordCard extends StatelessWidget {
                   state,
                   ColorManager.actionBlue,
                 ),
-                onPressed: onSpeak,
+                onPressed: state.canStartRecording ? onSpeak : null,
               ),
               SizedBox(height: AppPadding.p8.h),
               Text(
@@ -121,7 +140,12 @@ class PhonicsWordCard extends StatelessWidget {
               ),
               SizedBox(height: AppPadding.p16.h),
               _AiTwinTip(
-                tip: pronunciationTwinTip(state, AppStrings.phonicsAiTwinTip),
+                tip: phonicsTwinTip(state),
+              ),
+              PronunciationAttemptBar(
+                state: state,
+                onRetry: onSpeak,
+                onNext: onNext,
               ),
             ],
           ),
@@ -190,6 +214,7 @@ class _AiTwinTip extends StatelessWidget {
             width: AppSize.s32.w,
             height: AppSize.s32.w,
             alignment: Alignment.center,
+            clipBehavior: Clip.antiAlias,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
@@ -199,8 +224,8 @@ class _AiTwinTip extends StatelessWidget {
               ),
             ),
             child: CourseSvgIcon(
-              asset: Assets.assetsIconsAiTwin,
-              size: AppSize.s28.w,
+              asset: Assets.assetsIconsAi,
+            size: AppSize.s12.w,
             ),
           ),
           SizedBox(width: AppPadding.p12.w),

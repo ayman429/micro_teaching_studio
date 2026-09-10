@@ -118,6 +118,10 @@ class ColorManager {
     Color(0xffF8FAFC),
     Color(0xffEFF6FF),
   ];
+  static const List<Color> gradientAimsSurface = [
+    Color(0xffffffff),
+    Color(0x80EFF6FF),
+  ];
   static const List<Color> gradientFluencySurface = [
     Color(0xffF8FAFC),
     Color(0xffffffff),

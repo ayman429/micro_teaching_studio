@@ -14,6 +14,7 @@ import 'package:micro_teaching_studio/features/auth/cubit/auth_state.dart';
 import 'package:micro_teaching_studio/features/auth/widgets/auth_account_prompt.dart';
 import 'package:micro_teaching_studio/features/auth/widgets/sign_in_form_card.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 
 class SignInPage extends StatefulWidget {
@@ -48,10 +49,6 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
-  void _popIfPossible() {
-    if (context.canPop()) context.pop();
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
@@ -72,11 +69,9 @@ class _SignInPageState extends State<SignInPage> {
           voiceCode: CourseConstants.loginVoiceCode,
           title: AppStrings.loginEnglishTitle.tr(),
           currentIndex: CourseConstants.loginStepIndex,
-          onClose: _popIfPossible,
-          onHelp: _popIfPossible,
-          onSkip: _popIfPossible,
-          onBack: _popIfPossible,
+          onBack: () => CourseFlow.back(context),
           onNext: state.isLoading ? null : _submit,
+          backEnabled: CourseFlow.hasPrevious(context),
           body: SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
               AppPadding.p16.w,

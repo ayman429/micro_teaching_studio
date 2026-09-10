@@ -2,24 +2,30 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
+import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
+import 'package:micro_teaching_studio/features/course_audio/widgets/course_listen_control.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_svg_icon.dart';
 import 'package:micro_teaching_studio/features/fluency/models/fluency_rating.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/cubit/pronunciation_cubit.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/cubit/pronunciation_state.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/pronunciation_ui.dart';
+import 'package:micro_teaching_studio/features/pronunciation_assessment/widgets/pronunciation_attempt_bar.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
 class FluencyPracticeCard extends StatelessWidget {
   const FluencyPracticeCard({
     super.key,
     required this.onSpeak,
+    required this.onNext,
   });
 
   final VoidCallback onSpeak;
+  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -53,18 +59,31 @@ class FluencyPracticeCard extends StatelessWidget {
                 ),
               ),
               SizedBox(height: AppPadding.p12.h),
-              Text.rich(
-                TextSpan(
-                  children: pronunciationPassageSpans(
-                    passage: AppStrings.fluencyPracticePassage.tr(),
-                    result: state.result,
-                    baseStyle: getMediumStyle(
-                      fontSize: FontSize.s14.sp,
-                      color: ColorManager.slate800,
-                      height: 1.625,
+              GestureDetector(
+                onTap: !state.isRecording && !state.isAssessing
+                    ? () => context.read<CourseAudioCubit>().toggle(
+                          AudioAssets.fluencyParagraph(),
+                        )
+                    : null,
+                child: Text.rich(
+                  TextSpan(
+                    children: pronunciationPassageSpans(
+                      passage: AppStrings.fluencyPracticePassage.tr(),
+                      result: state.result,
+                      baseStyle: getMediumStyle(
+                        fontSize: FontSize.s14.sp,
+                        color: ColorManager.slate800,
+                        height: 1.625,
+                      ),
                     ),
                   ),
                 ),
+              ),
+              SizedBox(height: AppPadding.p20.h),
+              CourseListenControl(
+                asset: AudioAssets.fluencyParagraph(),
+                color: ColorManager.navy,
+                enabled: !state.isRecording && !state.isAssessing,
               ),
               SizedBox(height: AppPadding.p20.h),
               DecoratedBox(
@@ -86,7 +105,7 @@ class FluencyPracticeCard extends StatelessWidget {
                     state,
                     ColorManager.navy,
                   ),
-                  onPressed: onSpeak,
+                  onPressed: state.canStartRecording ? onSpeak : null,
                 ),
               ),
               SizedBox(height: AppPadding.p16.h),
@@ -124,6 +143,11 @@ class FluencyPracticeCard extends StatelessWidget {
               SizedBox(height: AppPadding.p16.h),
               _FluencyAiTwinTip(
                 tip: pronunciationTwinTip(state, AppStrings.fluencyAiTwinTip),
+              ),
+              PronunciationAttemptBar(
+                state: state,
+                onRetry: onSpeak,
+                onNext: onNext,
               ),
             ],
           ),

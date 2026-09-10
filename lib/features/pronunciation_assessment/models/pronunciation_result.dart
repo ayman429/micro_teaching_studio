@@ -1,15 +1,27 @@
 enum PronunciationBand { excellent, needsImprov, incorrect }
 
+class PronunciationPhonemeCandidate {
+  const PronunciationPhonemeCandidate({
+    required this.phoneme,
+    this.accuracy,
+  });
+
+  final String phoneme;
+  final double? accuracy;
+}
+
 class PronunciationPhonemeScore {
   const PronunciationPhonemeScore({
     required this.phoneme,
     required this.accuracy,
     this.heardPhoneme,
+    this.nBest = const [],
   });
 
   final String phoneme;
   final double? accuracy;
   final String? heardPhoneme;
+  final List<PronunciationPhonemeCandidate> nBest;
 
   PronunciationBand get band => PronunciationResult.bandFromScore(accuracy);
 
@@ -94,5 +106,16 @@ class PronunciationResult {
     if (value >= 80) return PronunciationBand.excellent;
     if (value >= 60) return PronunciationBand.needsImprov;
     return PronunciationBand.incorrect;
+  }
+
+  static PronunciationBand bandFromName(String? name) {
+    switch (name) {
+      case 'excellent':
+        return PronunciationBand.excellent;
+      case 'needs_improv':
+        return PronunciationBand.needsImprov;
+      default:
+        return PronunciationBand.incorrect;
+    }
   }
 }

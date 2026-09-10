@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:micro_teaching_studio/app/app_functions.dart';
 import 'package:micro_teaching_studio/app/app_prefs.dart';
 import 'package:micro_teaching_studio/app/imports.dart';
 import 'package:micro_teaching_studio/common/resources/app_router.dart';
@@ -16,7 +17,11 @@ import 'package:micro_teaching_studio/features/auth/cubit/auth_cubit.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_state.dart';
 import 'package:micro_teaching_studio/features/auth/models/student_avatar.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/course_loading_dialog.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_state.dart';
 import 'package:micro_teaching_studio/features/home/models/home_module.dart';
 import 'package:micro_teaching_studio/features/home/models/home_session.dart';
 import 'package:micro_teaching_studio/features/home/widgets/home_module_card.dart';
@@ -24,22 +29,32 @@ import 'package:micro_teaching_studio/features/home/widgets/home_profile_card.da
 import 'package:micro_teaching_studio/features/home/widgets/logout_confirm_dialog.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  var _opening = false;
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
-        return CourseScaffold(
+        return BlocBuilder<CourseProgressCubit, CourseProgressState>(
+          builder: (context, progressState) {
+            final progress = progressState.snapshot;
+            return CourseScaffold(
           voiceCode: CourseConstants.homeVoiceCode,
           title: AppStrings.homeEnglishTitle.tr(),
           currentIndex: CourseConstants.homeStepIndex,
           closeAsset: Assets.assetsIconsLogout,
           onClose: () => _confirmLogout(context),
-          onHelp: () => _popIfPossible(context),
-          onSkip: () => _popIfPossible(context),
-          onBack: () => _popIfPossible(context),
+          onBack: null,
+          onNext: () => CourseFlow.next(context),
+          backEnabled: false,
           body: Directionality(
             textDirection: ui.TextDirection.ltr,
             child: ListView(
@@ -59,14 +74,35 @@ class HomePage extends StatelessWidget {
                       StudentAvatar.fromName(
                         instance<AppPreferences>().getUserImage(),
                       ),
+                  overallProgress: progress.overallProgress,
                 ),
                 SizedBox(height: AppPadding.p16.h),
-                Text(
-                  AppStrings.aimsOfTheProgram.tr(),
-                  style: getExtraBoldStyle(
-                    fontSize: FontSize.s18.sp,
-                    color: ColorManager.navy,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _openAims(context),
+                        child: Text(
+                          AppStrings.aimsOfTheProgram.tr(),
+                          style: getExtraBoldStyle(
+                            fontSize: FontSize.s18.sp,
+                            color: ColorManager.navy,
+                          ),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _openAims(context),
+                      child: Text(
+                        AppStrings.viewAimsAction.tr(),
+                        style: getBoldStyle(
+                          fontSize: FontSize.s11.sp,
+                          color: ColorManager.navy,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: AppPadding.p4.h),
                 Text(
@@ -82,6 +118,7 @@ class HomePage extends StatelessWidget {
                     padding: EdgeInsets.only(bottom: AppPadding.p16.h),
                     child: HomeModuleCard(
                       module: module,
+                      progress: progress.moduleProgress(module.number),
                       onSessionTap: (session) =>
                           _openSession(context, module, session),
                     ),
@@ -90,25 +127,47 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
+            );
+          },
         );
       },
     );
   }
 
-  void _openSession(
+  void _openAims(BuildContext context) {
+    context.go(AppRouters.aimsView);
+  }
+
+  Future<void> _openSession(
     BuildContext context,
     HomeModule module,
     HomeSession session,
-  ) {
-    if (module.number == 1 && session.number == 1) {
-      context.push(AppRouters.fluencyView);
-    } else if (module.number == 1 && session.number == 2) {
-      context.push(AppRouters.phonicsView);
+  ) async {
+    if (_opening) return;
+    _opening = true;
+    final progress = context.read<CourseProgressCubit>();
+    try {
+      if (!progress.isHydrated) {
+        await CourseLoadingDialog.run(
+          context: context,
+          task: progress.ensureHydrated,
+        );
+      } else {
+        await progress.ensureHydrated();
+      }
+      if (!context.mounted) return;
+      CourseFlow.openSession(context, module.number, session.number);
+    } catch (error) {
+      if (context.mounted) {
+        AppFunctions.showsToast(
+          AppStrings.noInternetError.tr(),
+          ColorManager.red,
+          context,
+        );
+      }
+    } finally {
+      _opening = false;
     }
-  }
-
-  void _popIfPossible(BuildContext context) {
-    if (context.canPop()) context.pop();
   }
 
   Future<void> _confirmLogout(BuildContext context) async {

@@ -59,3 +59,9 @@ ios/Pods/
 ios/.symlinks/
 ios/Flutter/Flutter.podspec
 ios/Flutter/ephemeral/
+
+# Analytics export
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+tool/export_analytics/node_modules/
+tool/export_analytics/*.xlsx

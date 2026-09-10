@@ -16,16 +16,18 @@ class HomeModuleCard extends StatelessWidget {
   const HomeModuleCard({
     super.key,
     required this.module,
+    required this.progress,
     this.onSessionTap,
   });
 
   final HomeModule module;
+  final double progress;
   final ValueChanged<HomeSession>? onSessionTap;
 
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(AppRadius.r24.r);
-    final percent = (module.progress * 100).round().toString();
+    final percent = (progress.clamp(0, 1) * 100).round().toString();
 
     return Container(
       width: double.infinity,
@@ -126,7 +128,7 @@ class HomeModuleCard extends StatelessWidget {
                                           FractionallySizedBox(
                                             alignment: Alignment.centerLeft,
                                             widthFactor:
-                                                module.progress.clamp(0, 1),
+                                                progress.clamp(0, 1),
                                             child: const ColoredBox(
                                               color: ColorManager.progressGreen,
                                             ),

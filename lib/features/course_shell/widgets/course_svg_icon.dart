@@ -15,15 +15,27 @@ class CourseSvgIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget icon = asset.toLowerCase().endsWith('.svg')
+        ? SvgPicture.asset(
+            asset,
+            width: size,
+            height: size,
+            fit: BoxFit.contain,
+          )
+        : Image.asset(
+            asset,
+            width: size,
+            height: size,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
+            isAntiAlias: true,
+            gaplessPlayback: true,
+          );
+
     return SizedBox(
       width: size,
       height: size,
-      child: SvgPicture.asset(
-        asset,
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
-      ),
+      child: icon,
     );
   }
 }

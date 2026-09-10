@@ -1,6 +1,8 @@
 import 'package:micro_teaching_studio/app/app_prefs.dart';
 import 'package:micro_teaching_studio/common/resources/theme_manager.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_cubit.dart';
+import 'package:micro_teaching_studio/features/auth/cubit/auth_state.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -45,9 +47,17 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: instance<AuthCubit>(),
-      child: ScreenUtilInit(
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: instance<AuthCubit>()),
+        BlocProvider.value(value: instance<CourseProgressCubit>()),
+      ],
+      child: BlocListener<AuthCubit, AuthState>(
+        listenWhen: (previous, current) => previous.status != current.status,
+        listener: (context, state) {
+          context.read<CourseProgressCubit>().reload();
+        },
+        child: ScreenUtilInit(
           designSize: Size(MediaQuery.sizeOf(context).width,
               MediaQuery.sizeOf(context).height),
           minTextAdapt: true,
@@ -91,6 +101,7 @@ class _MyAppState extends State<MyApp> {
               ),
             );
           },
+        ),
       ),
     );
   }

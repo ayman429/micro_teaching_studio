@@ -259,10 +259,24 @@ class PronunciationEngine {
       heard = ((nBest.first as Map)['Phoneme'] ?? '').toString();
       if (heard.isEmpty || heard == expected) heard = null;
     }
+    final candidates = <PronunciationPhonemeCandidate>[];
+    for (final item in nBest) {
+      if (item is! Map) continue;
+      final symbol = (item['Phoneme'] ?? '').toString().trim();
+      if (symbol.isEmpty) continue;
+      candidates.add(
+        PronunciationPhonemeCandidate(
+          phoneme: symbol,
+          accuracy: _asDouble(item['Score'] ?? item['AccuracyScore']),
+        ),
+      );
+      if (candidates.length == 3) break;
+    }
     return PronunciationPhonemeScore(
       phoneme: expected,
       accuracy: _asDouble(assessment['AccuracyScore']),
       heardPhoneme: heard,
+      nBest: candidates,
     );
   }
 

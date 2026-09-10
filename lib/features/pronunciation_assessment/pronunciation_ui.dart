@@ -87,6 +87,18 @@ String pronunciationTwinTip(PronunciationState state, String fallbackKey) {
   }
 }
 
+String phonicsTwinTip(PronunciationState state) {
+  if (state.result == null) return AppStrings.phonicsAiTwinTip.tr();
+  switch (state.result!.band) {
+    case PronunciationBand.excellent:
+      return AppStrings.phonicsAiTwinExcellent.tr();
+    case PronunciationBand.needsImprov:
+      return AppStrings.phonicsAiTwinNeedsImprov.tr();
+    case PronunciationBand.incorrect:
+      return AppStrings.phonicsAiTwinIncorrect.tr();
+  }
+}
+
 List<InlineSpan> pronunciationPassageSpans({
   required String passage,
   required PronunciationResult? result,

@@ -55,6 +55,7 @@ class Assets {
   static const String assetsIconsHelpLightbulb =
       "assets/icons/help_lightbulb.svg";
   static const String assetsIconsHelpPlay = "assets/icons/help_play.svg";
+  static const String assetsIconsHelpPause = "assets/icons/help_pause.svg";
   static const String assetsIconsHelpVolumeBody =
       "assets/icons/help_volume_body.svg";
   static const String assetsIconsHelpVolumeWave =
@@ -63,6 +64,8 @@ class Assets {
       "assets/icons/session_target.svg";
   static const String assetsIconsSessionMic = "assets/icons/session_mic.svg";
   static const String assetsIconsAiTwin = "assets/icons/ai_twin.svg";
+  static const String assetsIconsAbc = "assets/images/abc.png";
+  static const String assetsIconsAi = "assets/images/ai.png";
   static const String assetsIconsModuleSpeaker =
       "assets/icons/module_speaker.svg";
   static const String assetsIconsModuleUsers = "assets/icons/module_users.svg";
@@ -192,10 +195,18 @@ class Assets {
   /// assets/icons/whoProfile.svg
   static const String assetsIconsWhoProfile = "assets/icons/whoProfile.svg";
 
+  /// Assets for assetsImagesAbc
+  /// assets/images/abc.png
+  static const String assetsImagesAbc = "assets/images/abc.png";
+
   /// Assets for assetsImagesAcademicSupervisor
   /// assets/images/AcademicSupervisor.png
   static const String assetsImagesAcademicSupervisor =
       "assets/images/AcademicSupervisor.png";
+
+  /// Assets for assetsImagesAi
+  /// assets/images/ai.png
+  static const String assetsImagesAi = "assets/images/ai.png";
 
   /// Assets for assetsImagesAdministrative
   /// assets/images/Administrative.png

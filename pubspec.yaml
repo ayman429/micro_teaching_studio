@@ -88,6 +88,7 @@ dependencies:
   # open_filex:
   path_provider:
   record: ^6.1.2
+  just_audio: ^0.10.5
   permission_handler: ^11.3.0
 #  cloud_firestore: ^4.17.5
   # chat packages ============
@@ -143,6 +144,15 @@ flutter:
     - assets/translations/
     - assets/icons/
     - assets/pdf/
+    - assets/audio/
+    - assets/audio/module1/session1/
+    - assets/audio/module1/session2/
+    - assets/audio/module2/session1/
+    - assets/audio/module2/session2/
+    - assets/audio/module3/session1/
+    - assets/audio/module3/session2/
+    - assets/audio/module3/session3/
+    - assets/videos/
     - shorebird.yaml
 
   fonts:
@@ -201,5 +211,14 @@ flutter_assets:
     - assets/json/
     - assets/icons/
     - assets/pdf/
+    - assets/audio/
+    - assets/audio/module1/session1/
+    - assets/audio/module1/session2/
+    - assets/audio/module2/session1/
+    - assets/audio/module2/session2/
+    - assets/audio/module3/session1/
+    - assets/audio/module3/session2/
+    - assets/audio/module3/session3/
+    - assets/videos/
   output_path: lib/images_urls/
   filename: assets.dart

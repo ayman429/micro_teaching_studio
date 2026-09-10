@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,7 +10,10 @@ import 'package:micro_teaching_studio/app/imports.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
+import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
+import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
 // import 'package:micro_teaching_studio/features/fluency/widgets/fluency_feedback_card.dart';
@@ -28,9 +33,30 @@ class _FluencyPageState extends State<FluencyPage> {
   int _selectedTab = 0;
 
   @override
+  void dispose() {
+    unawaited(instance<CourseAudioCubit>().stop());
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => instance<PronunciationCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) {
+            final cubit = instance<PronunciationCubit>();
+            unawaited(
+              cubit.restore(
+                AssessmentPartContext.fluency(
+                  referenceText: AppStrings.fluencyPracticePassage.tr(),
+                ),
+              ),
+            );
+            return cubit;
+          },
+        ),
+        BlocProvider.value(value: instance<CourseAudioCubit>()),
+      ],
       child: BlocListener<PronunciationCubit, PronunciationState>(
         listenWhen: (previous, current) =>
             current.status == PronunciationStatus.failure &&
@@ -47,11 +73,8 @@ class _FluencyPageState extends State<FluencyPage> {
           title: AppStrings.fluencyEnglishTitle.tr(),
           currentIndex: CourseConstants.fluencyStepIndex,
           bodyGradient: ColorManager.gradientFluencySurface,
-          onClose: () => _popIfPossible(),
-          onHelp: () => _popIfPossible(),
-          onSkip: () => _popIfPossible(),
-          onBack: () => _popIfPossible(),
-          onNext: () => _popIfPossible(),
+          onBack: () => CourseFlow.back(context),
+          onNext: () => CourseFlow.next(context),
           body: ListView(
             padding: EdgeInsets.fromLTRB(
               AppPadding.p16.w,
@@ -79,8 +102,13 @@ class _FluencyPageState extends State<FluencyPage> {
                         context.read<PronunciationCubit>().toggle(
                               referenceText:
                                   AppStrings.fluencyPracticePassage.tr(),
+                              part: AssessmentPartContext.fluency(
+                                referenceText:
+                                    AppStrings.fluencyPracticePassage.tr(),
+                              ),
                             );
                       },
+                      onNext: () => CourseFlow.next(context),
                     );
                   },
                 ),
@@ -98,6 +126,9 @@ class _FluencyPageState extends State<FluencyPage> {
   }
 
   void _selectTab(int index) {
+    if (index != 1) {
+      unawaited(instance<CourseAudioCubit>().stop());
+    }
     setState(() => _selectedTab = index);
   }
 

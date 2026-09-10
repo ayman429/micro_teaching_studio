@@ -69,6 +69,7 @@ class AppLetterSpacing {
   static const double display = -0.8;
   static const double title = 0.275;
   static const double label = 1;
+  static const double stat = 0.9;
   static const double video = 1.1;
   static const double button = 1.2;
 }

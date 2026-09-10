@@ -14,15 +14,17 @@ class HomeProfileCard extends StatelessWidget {
     required this.fullName,
     required this.userName,
     this.avatar = StudentAvatar.girl,
+    this.overallProgress = 0,
   });
 
   final String fullName;
   final String userName;
   final StudentAvatar avatar;
+  final double overallProgress;
 
   @override
   Widget build(BuildContext context) {
-    final percent = (CourseConstants.overallProgress * 100).round().toString();
+    final percent = (overallProgress.clamp(0, 1) * 100).round().toString();
     final greeting = fullName.trim().isEmpty
         ? AppStrings.ahlanFutureTeacher.tr()
         : AppStrings.ahlanNamed.tr(namedArgs: {'name': fullName.trim()});
@@ -110,7 +112,7 @@ class HomeProfileCard extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Text(
-              CourseConstants.rating,
+              (overallProgress.clamp(0, 1) * 5).toStringAsFixed(1),
               style: getExtraBoldStyle(
                 fontSize: FontSize.s11.sp,
                 color: ColorManager.white,

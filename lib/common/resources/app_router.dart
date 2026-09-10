@@ -1,3 +1,5 @@
+import 'package:micro_teaching_studio/features/aims/aims_page.dart';
+import 'package:micro_teaching_studio/features/course_shell/upcoming_session_page.dart';
 import 'package:micro_teaching_studio/features/auth/login_page.dart';
 import 'package:micro_teaching_studio/features/auth/sign_in_page.dart';
 import 'package:micro_teaching_studio/features/fluency/fluency_page.dart';
@@ -57,9 +59,14 @@ abstract class AppRouters {
   static const String loginView = '/loginView';
   static const String signInView = '/signInView';
   static const String homeView = '/homeView';
+  static const String aimsView = '/aimsView';
   static const String helpView = '/helpView';
   static const String fluencyView = '/fluencyView';
   static const String phonicsView = '/phonicsView';
+  static const String sessionView = '/course/module/:module/session/:session';
+
+  static String sessionLocation(int module, int session) =>
+      '/course/module/$module/session/$session';
 
   // ********************* SignUpView ****************************
   static const String signUpView = '/signUpView';
@@ -165,6 +172,14 @@ abstract class AppRouters {
         },
       ),
       GoRoute(
+        path: aimsView,
+        pageBuilder: (context, state) {
+          return const CupertinoPage(
+            child: AimsView(),
+          );
+        },
+      ),
+      GoRoute(
         path: fluencyView,
         pageBuilder: (context, state) {
           return const CupertinoPage(
@@ -177,6 +192,21 @@ abstract class AppRouters {
         pageBuilder: (context, state) {
           return const CupertinoPage(
             child: PhonicsView(),
+          );
+        },
+      ),
+      GoRoute(
+        path: sessionView,
+        pageBuilder: (context, state) {
+          final module =
+              int.tryParse(state.pathParameters['module'] ?? '') ?? 0;
+          final session =
+              int.tryParse(state.pathParameters['session'] ?? '') ?? 0;
+          return CupertinoPage(
+            child: UpcomingSessionView(
+              module: module,
+              session: session,
+            ),
           );
         },
       ),

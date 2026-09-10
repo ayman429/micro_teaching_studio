@@ -26,7 +26,7 @@ class HomeModule {
       number: 1,
       iconAsset: Assets.assetsIconsModuleSpeaker,
       iconBackground: ColorManager.actionBlue,
-      progress: 0.6,
+      progress: 0,
       titleKey: AppStrings.module1Title,
       sessions: [
         HomeSession(number: 1, labelKey: AppStrings.session1Fluency),
@@ -37,7 +37,7 @@ class HomeModule {
       number: 2,
       iconAsset: Assets.assetsIconsModuleUsers,
       iconBackground: ColorManager.navy,
-      progress: 0.25,
+      progress: 0,
       titleKey: AppStrings.module2Title,
       sessions: [
         HomeSession(number: 1, labelKey: AppStrings.session1Greetings),

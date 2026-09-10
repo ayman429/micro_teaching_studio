@@ -1,6 +1,27 @@
 const String jsonPath = "assets/json";
 const String imagesPath = "assets/images";
 const String iconsPath = "assets/icons";
+const String audioPath = "assets/audio";
+const String videoPath = "assets/videos";
+
+class AudioAssets {
+  static String sessionFolder(int module, int session) =>
+      '$audioPath/module$module/session$session';
+
+  static String file(int module, int session, String fileName) =>
+      '${sessionFolder(module, session)}/$fileName';
+
+  static String fluencyParagraph() => file(1, 1, 'paragraph.mp3');
+
+  static String phonicsClip(String word) =>
+      file(1, 2, '${word.trim().toLowerCase()}.mp3');
+}
+
+class VideoAssets {
+  static String file(String fileName) => '$videoPath/$fileName';
+
+  static String help() => file('help.mp4');
+}
 
 class JsonAssets {
   static const String error = '$jsonPath/image_error.json';

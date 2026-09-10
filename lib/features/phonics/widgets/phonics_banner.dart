@@ -5,7 +5,8 @@ import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
-import 'package:micro_teaching_studio/features/phonics/models/phonics_glyph.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/course_svg_icon.dart';
+import 'package:micro_teaching_studio/images_urls/assets.dart';
 
 class PhonicsBanner extends StatelessWidget {
   const PhonicsBanner({super.key});
@@ -29,12 +30,9 @@ class PhonicsBanner extends StatelessWidget {
               color: ColorManager.onDarkOverlay,
               borderRadius: BorderRadius.circular(AppRadius.r16.r),
             ),
-            child: Text(
-              PhonicsGlyph.letters,
-              style: getBoldStyle(
-                fontSize: FontSize.s14.sp,
-                color: ColorManager.white,
-              ),
+            child: CourseSvgIcon(
+              asset: Assets.assetsIconsAbc,
+              size: AppSize.s24.w,
             ),
           ),
           SizedBox(width: AppPadding.p12.w),
