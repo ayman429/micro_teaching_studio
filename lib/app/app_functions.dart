@@ -13,9 +13,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
-import 'package:page_transition/page_transition.dart';
 
 class AppFunctions {
+  static const Duration _transitionDuration = Duration(milliseconds: 500);
+
+  static PageRoute<T> _slideFromRight<T>(Widget screen) {
+    return PageRouteBuilder<T>(
+      pageBuilder: (_, __, ___) => screen,
+      transitionDuration: _transitionDuration,
+      reverseTransitionDuration: _transitionDuration,
+      transitionsBuilder: (_, animation, __, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+          child: child,
+        );
+      },
+    );
+  }
+
+  static PageRoute<T> _fade<T>(Widget screen) {
+    return PageRouteBuilder<T>(
+      pageBuilder: (_, __, ___) => screen,
+      transitionDuration: _transitionDuration,
+      reverseTransitionDuration: _transitionDuration,
+      transitionsBuilder: (_, animation, __, child) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+    );
+  }
   static String reverseString(String originalString) {
     List<String> charList = originalString.split('');
     List<String> reversedList = charList.reversed.toList();
@@ -64,13 +92,7 @@ class AppFunctions {
         ? navigatorKey.currentState?.push(CupertinoPageRoute(
             builder: (context) => screen,
           ))
-        : navigatorKey.currentState?.push(PageTransition(
-            child: screen,
-            type: PageTransitionType.rightToLeft,
-            alignment: Alignment.center,
-            duration: const Duration(milliseconds: 500),
-            reverseDuration: const Duration(milliseconds: 500),
-          )));
+        : navigatorKey.currentState?.push(_slideFromRight(screen)));
   }
 
   static void navigateToAndReplacement(BuildContext context, Widget screen) {
@@ -78,13 +100,7 @@ class AppFunctions {
         ? navigatorKey.currentState?.pushReplacement(CupertinoPageRoute(
             builder: (context) => screen,
           ))
-        : navigatorKey.currentState?.pushReplacement(PageTransition(
-            child: screen,
-            type: PageTransitionType.rightToLeft,
-            alignment: Alignment.center,
-            duration: const Duration(milliseconds: 500),
-            reverseDuration: const Duration(milliseconds: 500),
-          ));
+        : navigatorKey.currentState?.pushReplacement(_slideFromRight(screen));
   }
 
   static void navigateToAndFinish(BuildContext context, Widget screen) {
@@ -96,26 +112,14 @@ class AppFunctions {
             (route) => false,
           )
         : navigatorKey.currentState?.pushAndRemoveUntil(
-            PageTransition(
-              child: screen,
-              type: PageTransitionType.fade,
-              alignment: Alignment.center,
-              duration: const Duration(milliseconds: 500),
-              reverseDuration: const Duration(milliseconds: 500),
-            ),
+            _fade(screen),
             (route) => false,
           );
   }
 
   static void popThenNavigateTo(BuildContext context, Widget screen) {
     Navigator.pop(context);
-    navigatorKey.currentState?.push(PageTransition(
-      child: screen,
-      type: PageTransitionType.rightToLeft,
-      alignment: Alignment.center,
-      duration: const Duration(milliseconds: 500),
-      reverseDuration: const Duration(milliseconds: 500),
-    ));
+    navigatorKey.currentState?.push(_slideFromRight(screen));
   }
 
   static String convertToArabic(int number) {
