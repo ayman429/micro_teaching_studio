@@ -20,9 +20,9 @@ plugins {
     // ⚠️ لا تغيّره (خاص بفلتر)
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
 
-    // ✅ AGP متوافق مع compileSdk 36
-    id "com.android.application" version "8.9.1" apply false
-    id "com.android.library" version "8.9.1" apply false
+    // Flutter 3.47+ requires AGP >= 8.11.1; stay on 8.x to avoid AGP 9 new DSL.
+    id "com.android.application" version "8.11.1" apply false
+    id "com.android.library" version "8.11.1" apply false
 
     // firebase_auth 24.2.0 ships Kotlin 2.3.0 metadata
     id "org.jetbrains.kotlin.android" version "2.3.0" apply false
