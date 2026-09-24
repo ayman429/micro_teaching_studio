@@ -24,13 +24,21 @@ class PronunciationState extends Equatable {
   bool get isScored => status == PronunciationStatus.scored;
   PronunciationBand? get band => result?.band;
 
+  int get remainingAttempts {
+    final left = PronunciationConstants.maxAttempts - attemptCount;
+    return left < 0 ? 0 : left;
+  }
+
   bool get canRetry =>
       !locked &&
       isScored &&
       band != PronunciationBand.excellent &&
-      attemptCount < PronunciationConstants.maxAttempts;
+      remainingAttempts > 0;
 
-  bool get showNext => isScored || locked;
+  bool get showNext =>
+      isScored &&
+      (band == PronunciationBand.excellent ||
+          band == PronunciationBand.needsImprov);
 
   bool get canStartRecording {
     if (locked) return false;

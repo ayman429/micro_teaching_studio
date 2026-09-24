@@ -15,6 +15,8 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
   final AudioPlayer _player = AudioPlayer();
   StreamSubscription<PlayerState>? _playerSub;
   String? _activeAsset;
+  List<String> _sequence = const [];
+  var _sequenceIndex = 0;
 
   Future<void> toggle(String asset) async {
     if (asset.isEmpty) return;
@@ -25,8 +27,25 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
     await play(asset);
   }
 
+  Future<void> playSequence(List<String> assets) async {
+    _sequence = [
+      for (final asset in assets)
+        if (asset.isNotEmpty) asset,
+    ];
+    _sequenceIndex = 0;
+    if (_sequence.isEmpty) return;
+    await play(_sequence.first);
+  }
+
   Future<void> play(String asset) async {
     if (asset.isEmpty) return;
+    final inSequence = _sequence.isNotEmpty &&
+        _sequenceIndex < _sequence.length &&
+        _sequence[_sequenceIndex] == asset;
+    if (!inSequence) {
+      _sequence = const [];
+      _sequenceIndex = 0;
+    }
     _activeAsset = asset;
     emit(
       CourseAudioState(playingAsset: asset),
@@ -54,6 +73,8 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
       await _player.play();
     } catch (error, stack) {
       log('course audio: $error', stackTrace: stack);
+      _sequence = const [];
+      _sequenceIndex = 0;
       _activeAsset = null;
       if (!isClosed) {
         emit(
@@ -84,6 +105,8 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
   }
 
   Future<void> stop() async {
+    _sequence = const [];
+    _sequenceIndex = 0;
     _activeAsset = null;
     try {
       await _player.stop();
@@ -95,7 +118,19 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
 
   void _onPlayerState(PlayerState playerState) {
     if (playerState.processingState != ProcessingState.completed) return;
+    final finished = _activeAsset;
     _activeAsset = null;
+    if (_sequence.isNotEmpty &&
+        _sequenceIndex < _sequence.length &&
+        finished == _sequence[_sequenceIndex]) {
+      _sequenceIndex++;
+      if (_sequenceIndex < _sequence.length) {
+        unawaited(play(_sequence[_sequenceIndex]));
+        return;
+      }
+    }
+    _sequence = const [];
+    _sequenceIndex = 0;
     if (!isClosed) emit(const CourseAudioState());
   }
 

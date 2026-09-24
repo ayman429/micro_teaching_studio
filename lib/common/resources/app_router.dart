@@ -3,9 +3,15 @@ import 'package:micro_teaching_studio/features/course_shell/upcoming_session_pag
 import 'package:micro_teaching_studio/features/auth/login_page.dart';
 import 'package:micro_teaching_studio/features/auth/sign_in_page.dart';
 import 'package:micro_teaching_studio/features/fluency/fluency_page.dart';
+import 'package:micro_teaching_studio/features/session_one/session_one_page.dart';
+import 'package:micro_teaching_studio/features/session_two/session_two_page.dart';
+import 'package:micro_teaching_studio/features/session_three/session_three_page.dart';
+import 'package:micro_teaching_studio/features/grammar/grammar_session_page.dart';
+import 'package:micro_teaching_studio/features/presentation/presentation_session_page.dart';
 import 'package:micro_teaching_studio/features/home/home_page.dart';
 import 'package:micro_teaching_studio/features/phonics/phonics_page.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/pronunciation_assessment_page.dart';
+import 'package:micro_teaching_studio/features/opening/opening_page.dart';
 import 'package:micro_teaching_studio/features/splash/help_page.dart';
 import 'package:micro_teaching_studio/features/splash/splash_page.dart';
 import 'package:flutter/cupertino.dart';
@@ -61,6 +67,7 @@ abstract class AppRouters {
   static const String homeView = '/homeView';
   static const String aimsView = '/aimsView';
   static const String helpView = '/helpView';
+  static const String openingView = '/openingView';
   static const String fluencyView = '/fluencyView';
   static const String phonicsView = '/phonicsView';
   static const String sessionView = '/course/module/:module/session/:session';
@@ -126,19 +133,17 @@ abstract class AppRouters {
     navigatorKey: navigatorKey,
     initialLocation: AppRouters.root,
     routes: [
-     
       GoRoute(
         path: root,
         pageBuilder: (context, state) {
           return const CupertinoPage(child: SplashView());
         },
       ),
-     
-    
+
       //Calculator
-      
+
       //ReportTypesPdfView
-      
+
       GoRoute(
         path: loginView,
         pageBuilder: (context, state) {
@@ -160,6 +165,14 @@ abstract class AppRouters {
         pageBuilder: (context, state) {
           return const CupertinoPage(
             child: HelpView(),
+          );
+        },
+      ),
+      GoRoute(
+        path: openingView,
+        pageBuilder: (context, state) {
+          return const CupertinoPage(
+            child: OpeningView(),
           );
         },
       ),
@@ -202,6 +215,31 @@ abstract class AppRouters {
               int.tryParse(state.pathParameters['module'] ?? '') ?? 0;
           final session =
               int.tryParse(state.pathParameters['session'] ?? '') ?? 0;
+          if (module == 2 && session == 1) {
+            return const CupertinoPage(
+              child: SessionOneView(),
+            );
+          }
+          if (module == 2 && session == 2) {
+            return const CupertinoPage(
+              child: SessionTwoView(),
+            );
+          }
+          if (module == 3 && session == 1) {
+            return const CupertinoPage(
+              child: SessionThreeView(),
+            );
+          }
+          if (module == 3 && session == 2) {
+            return const CupertinoPage(
+              child: GrammarSessionView(),
+            );
+          }
+          if (module == 3 && session == 3) {
+            return const CupertinoPage(
+              child: PresentationSessionView(),
+            );
+          }
           return CupertinoPage(
             child: UpcomingSessionView(
               module: module,

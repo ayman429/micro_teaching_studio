@@ -27,9 +27,9 @@ class CourseStep {
 class CourseFlow {
   static final List<CourseStep> steps = [
     CourseStep(
-      route: AppRouters.helpView,
-      index: CourseConstants.helpStepIndex,
-      voiceCode: CourseConstants.helpVoiceCode,
+      route: AppRouters.openingView,
+      index: CourseConstants.openingStepIndex,
+      voiceCode: CourseConstants.openingVoiceCode,
     ),
     CourseStep(
       route: AppRouters.loginView,
@@ -131,12 +131,13 @@ class CourseFlow {
   }
 
   static void next(BuildContext context) {
-    final step = stepOf(context);
-    if (step == null || step.blocksNext) return;
-    if (step.route == AppRouters.helpView && context.canPop()) {
+    final location = GoRouterState.of(context).matchedLocation;
+    if (location == AppRouters.helpView && context.canPop()) {
       context.pop();
       return;
     }
+    final step = stepOf(context);
+    if (step == null || step.blocksNext) return;
     final index = _indexOf(step);
     if (index < 0 || index >= steps.length - 1) return;
     context.go(steps[index + 1].route);
@@ -149,10 +150,6 @@ class CourseFlow {
       return;
     }
     if (step.route == AppRouters.homeView) return;
-    if (step.route == AppRouters.helpView) {
-      if (context.canPop()) context.pop();
-      return;
-    }
     final index = _indexOf(step);
     if (index <= 0) return;
     context.go(steps[index - 1].route);
@@ -166,7 +163,7 @@ class CourseFlow {
     final location = GoRouterState.of(context).matchedLocation;
     if (location == AppRouters.loginView ||
         location == AppRouters.signInView) {
-      context.go(AppRouters.helpView);
+      context.go(AppRouters.openingView);
       return;
     }
     if (context.canPop()) context.pop();

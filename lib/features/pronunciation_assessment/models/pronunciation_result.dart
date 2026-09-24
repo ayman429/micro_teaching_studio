@@ -1,3 +1,5 @@
+import 'package:micro_teaching_studio/features/pronunciation_assessment/pronunciation_constants.dart';
+
 enum PronunciationBand { excellent, needsImprov, incorrect }
 
 class PronunciationPhonemeCandidate {
@@ -16,14 +18,17 @@ class PronunciationPhonemeScore {
     required this.accuracy,
     this.heardPhoneme,
     this.nBest = const [],
+    this.phonics = false,
   });
 
   final String phoneme;
   final double? accuracy;
   final String? heardPhoneme;
   final List<PronunciationPhonemeCandidate> nBest;
+  final bool phonics;
 
-  PronunciationBand get band => PronunciationResult.bandFromScore(accuracy);
+  PronunciationBand get band =>
+      PronunciationResult.bandFromScore(accuracy, phonics: phonics);
 
   bool get hasWrongSound {
     final heard = heardPhoneme?.trim() ?? '';
@@ -37,19 +42,27 @@ class PronunciationWordScore {
     required this.accuracy,
     required this.errorType,
     this.phonemes = const [],
+    this.phonics = false,
+    this.heardWord,
+    this.wrongWord = false,
   });
 
   final String word;
   final double? accuracy;
   final String errorType;
   final List<PronunciationPhonemeScore> phonemes;
+  final bool phonics;
+  final String? heardWord;
+  final bool wrongWord;
 
   bool get isInsertion => errorType.toLowerCase() == 'insertion';
   bool get isOmission => errorType.toLowerCase() == 'omission';
 
   PronunciationBand get band {
-    if (isOmission || isInsertion) return PronunciationBand.incorrect;
-    return PronunciationResult.bandFromScore(accuracy);
+    if (isOmission || isInsertion || wrongWord) {
+      return PronunciationBand.incorrect;
+    }
+    return PronunciationResult.bandFromScore(accuracy, phonics: phonics);
   }
 
   PronunciationPhonemeScore? get weakestPhoneme {
@@ -81,6 +94,7 @@ class PronunciationResult {
     required this.weakestWord,
     this.weakestPhoneme,
     this.heardPhoneme,
+    this.phonics = false,
   });
 
   final Map<String, dynamic> raw;
@@ -97,14 +111,50 @@ class PronunciationResult {
   final String? weakestWord;
   final String? weakestPhoneme;
   final String? heardPhoneme;
+  final bool phonics;
 
   List<PronunciationWordScore> get alignedWords =>
       words.where((word) => !word.isInsertion).toList();
 
-  static PronunciationBand bandFromScore(double? score) {
+  static String normalizeWord(String? value) {
+    return (value ?? '').toLowerCase().replaceAll(RegExp(r"[^a-z']"), '');
+  }
+
+  static String? spokenWord(String? value) {
+    final tokens = (value ?? '')
+        .split(RegExp(r"[^A-Za-z']+"))
+        .where((token) => token.trim().isNotEmpty);
+    if (tokens.isEmpty) return null;
+    return tokens.first;
+  }
+
+  static bool phonicsWordMismatch(String? heard, String expected) {
+    final expectedNorm = normalizeWord(expected);
+    if (expectedNorm.isEmpty) return false;
+    final spoken = spokenWord(heard);
+    return normalizeWord(spoken ?? heard) != expectedNorm;
+  }
+
+  static double capPhonicsWrongWordScore(double? score) {
+    final cap = PronunciationConstants.needsImprovMin - 1;
     final value = score ?? 0;
-    if (value >= 80) return PronunciationBand.excellent;
-    if (value >= 60) return PronunciationBand.needsImprov;
+    return value > cap ? cap : value;
+  }
+
+  static PronunciationBand bandFromScore(
+    double? score, {
+    bool phonics = false,
+  }) {
+    final value = score ?? 0;
+    final excellentMin = phonics
+        ? PronunciationConstants.phonicsExcellentMin
+        : PronunciationConstants.excellentMin;
+    if (value >= excellentMin) {
+      return PronunciationBand.excellent;
+    }
+    if (value >= PronunciationConstants.needsImprovMin) {
+      return PronunciationBand.needsImprov;
+    }
     return PronunciationBand.incorrect;
   }
 

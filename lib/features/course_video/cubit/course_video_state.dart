@@ -9,6 +9,7 @@ class CourseVideoState extends Equatable {
     this.progress = 0,
     this.position = Duration.zero,
     this.duration = Duration.zero,
+    this.completed = false,
     this.errorMessage,
   });
 
@@ -17,6 +18,7 @@ class CourseVideoState extends Equatable {
   final double progress;
   final Duration position;
   final Duration duration;
+  final bool completed;
   final String? errorMessage;
 
   bool get isReady => status == CourseVideoStatus.ready;
@@ -34,6 +36,7 @@ class CourseVideoState extends Equatable {
     double? progress,
     Duration? position,
     Duration? duration,
+    bool? completed,
     String? errorMessage,
     bool clearError = false,
   }) {
@@ -43,6 +46,7 @@ class CourseVideoState extends Equatable {
       progress: progress ?? this.progress,
       position: position ?? this.position,
       duration: duration ?? this.duration,
+      completed: completed ?? this.completed,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }
@@ -54,6 +58,7 @@ class CourseVideoState extends Equatable {
         progress,
         position,
         duration,
+        completed,
         errorMessage,
       ];
 }

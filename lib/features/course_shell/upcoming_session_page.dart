@@ -5,7 +5,6 @@ import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
-import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/home/models/home_module.dart';
 
@@ -21,7 +20,6 @@ class UpcomingSessionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final step = CourseFlow.stepForSession(module, session);
     final catalog = HomeModule.catalog.where((item) => item.number == module);
     final homeModule = catalog.isEmpty ? null : catalog.first;
     final sessions = homeModule?.sessions.where((item) => item.number == session);
@@ -29,12 +27,7 @@ class UpcomingSessionPage extends StatelessWidget {
         ? AppStrings.moduleSessionTitle
         : sessions.first.labelKey;
     return CourseScaffold(
-      voiceCode: step?.voiceCode ?? CourseFlow.steps.last.voiceCode,
       title: labelKey.tr(),
-      currentIndex: step?.index ?? CourseFlow.steps.last.index,
-      onBack: () => CourseFlow.back(context),
-      onNext: () => CourseFlow.next(context),
-      backEnabled: CourseFlow.hasPrevious(context),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
           AppPadding.p16.w,

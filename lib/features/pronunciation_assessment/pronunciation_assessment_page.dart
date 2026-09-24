@@ -10,6 +10,7 @@ import 'package:micro_teaching_studio/app/imports.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
+import 'package:micro_teaching_studio/features/pronunciation_assessment/pronunciation_constants.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
@@ -307,8 +308,12 @@ class _PronunciationAssessmentPageState
   Color _wordColor(String error, dynamic accuracy) {
     if (error != "None") return ColorManager.red;
     if (accuracy is num) {
-      if (accuracy < 60) return ColorManager.red;
-      if (accuracy < 80) return ColorManager.yellow;
+      if (accuracy < PronunciationConstants.needsImprovMin) {
+        return ColorManager.red;
+      }
+      if (accuracy < PronunciationConstants.excellentMin) {
+        return ColorManager.yellow;
+      }
     }
     return ColorManager.green;
   }

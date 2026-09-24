@@ -15,21 +15,21 @@ import 'package:micro_teaching_studio/images_urls/assets.dart';
 class CourseLessonHeader extends StatelessWidget {
   const CourseLessonHeader({
     super.key,
-    required this.voiceCode,
     required this.title,
     this.titleAr,
     this.onClose,
     this.onHelp,
     this.onSkip,
+    this.showSkip = true,
     this.closeAsset,
   });
 
-  final String voiceCode;
   final String title;
   final String? titleAr;
   final VoidCallback? onClose;
   final VoidCallback? onHelp;
   final VoidCallback? onSkip;
+  final bool showSkip;
   final String? closeAsset;
 
   @override
@@ -64,24 +64,6 @@ class CourseLessonHeader extends StatelessWidget {
                       onPressed: onClose,
                     ),
                     SizedBox(width: AppPadding.p8.w),
-                    Container(
-                      height: AppSize.voiceBadgeHeight.h,
-                      padding: EdgeInsets.symmetric(horizontal: AppPadding.p8.w),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: ColorManager.navy,
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.rCapsule.r),
-                      ),
-                      child: Text(
-                        AppStrings.voiceBadge
-                            .tr(namedArgs: {'code': voiceCode}),
-                        style: getBoldStyle(
-                          fontSize: FontSize.s10.sp,
-                          color: ColorManager.white,
-                        ).copyWith(letterSpacing: AppLetterSpacing.label),
-                      ),
-                    ),
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -111,40 +93,43 @@ class CourseLessonHeader extends StatelessWidget {
                       borderColor: ColorManager.slate200,
                       onPressed: onHelp,
                     ),
-                    SizedBox(width: AppPadding.p8.w),
-                    Material(
-                      color: ColorManager.slate900,
-                      borderRadius: BorderRadius.circular(AppRadius.rCapsule.r),
-                      child: InkWell(
-                        onTap: onSkip,
+                    if (showSkip) ...[
+                      SizedBox(width: AppPadding.p8.w),
+                      Material(
+                        color: ColorManager.slate900,
                         borderRadius:
                             BorderRadius.circular(AppRadius.rCapsule.r),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: AppPadding.p12.w,
-                            vertical: AppPadding.p8.h,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                AppStrings.skip.tr(),
-                                style: getBoldStyle(
-                                  fontSize: FontSize.s10.sp,
-                                  color: ColorManager.white,
-                                ).copyWith(
-                                    letterSpacing: AppLetterSpacing.label),
-                              ),
-                              SizedBox(width: AppPadding.p4.w),
-                              CourseSvgIcon(
-                                asset: Assets.assetsIconsCourseSkip,
-                                size: AppSize.s12.w,
-                              ),
-                            ],
+                        child: InkWell(
+                          onTap: onSkip,
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.rCapsule.r),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppPadding.p12.w,
+                              vertical: AppPadding.p8.h,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  AppStrings.skip.tr(),
+                                  style: getBoldStyle(
+                                    fontSize: FontSize.s10.sp,
+                                    color: ColorManager.white,
+                                  ).copyWith(
+                                      letterSpacing: AppLetterSpacing.label),
+                                ),
+                                SizedBox(width: AppPadding.p4.w),
+                                CourseSvgIcon(
+                                  asset: Assets.assetsIconsCourseSkip,
+                                  size: AppSize.s12.w,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

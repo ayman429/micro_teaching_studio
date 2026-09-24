@@ -1,12 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
-import 'package:micro_teaching_studio/features/aims/aims_metrics.dart';
-import 'package:micro_teaching_studio/features/aims/widgets/aims_check_row.dart';
+import 'package:micro_teaching_studio/features/course_audio/widgets/course_listen_control.dart';
+import 'package:micro_teaching_studio/images_urls/assets.dart';
 
 class AimsHeroCard extends StatelessWidget {
   const AimsHeroCard({super.key});
@@ -31,89 +32,53 @@ class AimsHeroCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
+          Image.asset(
+            Assets.assetsImagesAiTwinFull,
             width: AppSize.s84.w,
-            child: Column(
-              children: [
-                Container(
-                  width: AppSize.s84.w,
-                  height: AppSize.s84.w,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.r20.r),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: ColorManager.gradientAvatarGirl,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorManager.black.withValues(alpha: 0.1),
-                        blurRadius: AppPadding.p16.r,
-                        offset: Offset(0, AppPadding.p4.h),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    AimsMetrics.twinGlyph,
-                    style: getRegularStyle(
-                      fontSize: FontSize.s32.sp,
-                      color: ColorManager.slate800,
-                    ),
-                  ),
-                ),
-                SizedBox(height: AppPadding.p8.h),
-                Text(
-                  AppStrings.aiTwinSara.tr(),
-                  textAlign: TextAlign.center,
-                  style: getExtraBoldStyle(
-                    fontSize: FontSize.s11.sp,
-                    color: ColorManager.slate800,
-                  ),
-                ),
-                SizedBox(height: AppPadding.p4.h),
-                Text(
-                  AppStrings.yourTeachingPartner.tr(),
-                  textAlign: TextAlign.center,
-                  style: getRegularStyle(
-                    fontSize: FontSize.s9.sp,
-                    color: ColorManager.slate,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
+            height: AppSize.s80.h + AppSize.s80.h + AppSize.s40.h,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
           ),
-          SizedBox(width: AppPadding.p16.w),
+          SizedBox(width: AppPadding.p12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppStrings.aimsProgramHeading.tr(),
-                  style: getExtraBoldStyle(
-                    fontSize: FontSize.s15.sp,
-                    color: ColorManager.navy,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        AppStrings.aiTwinTitle.tr(),
+                        style: getExtraBoldStyle(
+                          fontSize: FontSize.s13.sp,
+                          color: ColorManager.navy,
+                        ),
+                      ),
+                    ),
+                    CourseListenControl(
+                      asset: AudioAssets.aimsTwinIntro(),
+                      color: ColorManager.navy,
+                      compact: true,
+                    ),
+                  ],
                 ),
                 SizedBox(height: AppPadding.p4.h),
                 Text(
-                  AppStrings.aimsProgramHeadingAr.tr(),
+                  AppStrings.yourTeachingPartner.tr(),
                   style: getRegularStyle(
-                    fontSize: FontSize.s10.sp,
+                    fontSize: FontSize.s11.sp,
                     color: ColorManager.slate,
                   ),
                 ),
-                SizedBox(height: AppPadding.p8.h),
-                ...AimsMetrics.itemKeys.asMap().entries.map((entry) {
-                  final isLast = entry.key == AimsMetrics.itemKeys.length - 1;
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      bottom: isLast ? 0 : AppPadding.p8.h,
-                    ),
-                    child: AimsCheckRow(labelKey: entry.value),
-                  );
-                }),
+                SizedBox(height: AppPadding.p12.h),
+                Text(
+                  AppStrings.aimsTwinIntro.tr(),
+                  style: getRegularStyle(
+                    fontSize: FontSize.s13.sp,
+                    color: ColorManager.slate700,
+                    height: 1.6,
+                  ),
+                ),
               ],
             ),
           ),

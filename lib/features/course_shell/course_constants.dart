@@ -1,5 +1,7 @@
 class CourseConstants {
   static const int totalFrames = 12;
+  static const int openingStepIndex = 1;
+  static const String openingVoiceCode = '1-1';
   static const int helpStepIndex = 1;
   static const String helpVoiceCode = '2-1';
   static const String helpVideoDuration = '2:14';

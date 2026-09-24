@@ -5,6 +5,7 @@ import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_word.dart';
+import 'package:micro_teaching_studio/features/pronunciation_assessment/pronunciation_ui.dart';
 
 class PhonicsWordChip extends StatelessWidget {
   const PhonicsWordChip({
@@ -37,7 +38,7 @@ class PhonicsWordChip extends StatelessWidget {
             ),
           ),
           child: Text(
-            word.wordKey.tr(),
+            capitalizeWord(word.wordKey.tr()),
             style: getBoldStyle(
               fontSize: FontSize.s12.sp,
               color: isSelected ? ColorManager.white : ColorManager.slate700,

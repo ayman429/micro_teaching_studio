@@ -46,7 +46,7 @@ class _SplashViewState extends State<SplashView> {
     ]);
     if (!mounted) return;
     final isLoggedIn = cubit.state.status == AuthStatus.authenticated;
-    context.go(isLoggedIn ? AppRouters.homeView : AppRouters.helpView);
+    context.go(isLoggedIn ? AppRouters.homeView : AppRouters.openingView);
   }
 
   @override

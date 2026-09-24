@@ -11,7 +11,13 @@ class CourseAudioState extends Equatable {
 
   bool get isPlaying => playingAsset != null;
 
-  bool isPlayingAsset(String asset) => playingAsset == asset;
+  bool isPlayingAsset(String asset) {
+    final current = playingAsset?.replaceAll('\\', '/').toLowerCase();
+    final wanted = asset.replaceAll('\\', '/').toLowerCase();
+    if (current == null || current.isEmpty || wanted.isEmpty) return false;
+    return current == wanted ||
+        current.split('/').last == wanted.split('/').last;
+  }
 
   CourseAudioState copyWith({
     String? playingAsset,

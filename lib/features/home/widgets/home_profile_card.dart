@@ -6,6 +6,7 @@ import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/auth/models/student_avatar.dart';
+import 'package:micro_teaching_studio/features/auth/widgets/student_avatar_image.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
 
 class HomeProfileCard extends StatelessWidget {
@@ -13,7 +14,7 @@ class HomeProfileCard extends StatelessWidget {
     super.key,
     required this.fullName,
     required this.userName,
-    this.avatar = StudentAvatar.girl,
+    this.avatar = StudentAvatar.girl1,
     this.overallProgress = 0,
   });
 
@@ -39,26 +40,12 @@ class HomeProfileCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: AppSize.avatarThumb.w,
-            height: AppSize.avatarThumb.w,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: avatar == StudentAvatar.girl
-                    ? ColorManager.gradientAvatarGirl
-                    : ColorManager.gradientAvatarBoy,
-              ),
-            ),
-            child: Text(
-              avatar.glyph,
-              style: getRegularStyle(
-                fontSize: FontSize.s16.sp,
-                color: ColorManager.white,
-              ),
+          ClipOval(
+            child: StudentAvatarImage(
+              avatar: avatar,
+              width: AppSize.avatarThumb.w,
+              height: AppSize.avatarThumb.w,
+              fit: BoxFit.cover,
             ),
           ),
           SizedBox(width: AppPadding.p12.w),

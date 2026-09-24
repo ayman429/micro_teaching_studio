@@ -22,7 +22,9 @@ class PronunciationAttemptBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!state.showNext) return const SizedBox.shrink();
+    if (!state.showNext && !state.canRetry) {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: EdgeInsets.only(top: AppPadding.p16.h),
       child: Row(
@@ -46,26 +48,27 @@ class PronunciationAttemptBar extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(width: AppPadding.p8.w),
+            if (state.showNext) SizedBox(width: AppPadding.p8.w),
           ],
-          Expanded(
-            child: SizedBox(
-              height: AppSize.s40.h,
-              child: DefaultButtonWidget(
-                onPressed: onNext,
-                color: ColorManager.navy,
-                radius: AppRadius.rCapsule.r,
-                elevation: 0,
-                child: Text(
-                  AppStrings.pronunciationNext.tr(),
-                  style: getBoldStyle(
-                    fontSize: FontSize.s11.sp,
-                    color: ColorManager.white,
+          if (state.showNext)
+            Expanded(
+              child: SizedBox(
+                height: AppSize.s40.h,
+                child: DefaultButtonWidget(
+                  onPressed: onNext,
+                  color: ColorManager.navy,
+                  radius: AppRadius.rCapsule.r,
+                  elevation: 0,
+                  child: Text(
+                    AppStrings.pronunciationNext.tr(),
+                    style: getBoldStyle(
+                      fontSize: FontSize.s11.sp,
+                      color: ColorManager.white,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

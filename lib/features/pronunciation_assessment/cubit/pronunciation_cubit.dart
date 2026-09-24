@@ -131,6 +131,7 @@ class PronunciationCubit extends Cubit<PronunciationState> {
         referenceText: referenceText,
         config: config,
         enableProsody: enableProsody,
+        phonics: _part?.isPhonics ?? false,
       );
       final attemptCount = state.attemptCount + 1;
       final locked = result.band == PronunciationBand.excellent ||
@@ -142,6 +143,7 @@ class PronunciationCubit extends Cubit<PronunciationState> {
         locked: locked,
       );
       emit(scored);
+      unawaited(_audio.play(pronunciationResultAudio(result.band)));
       unawaited(
         _persistScored(
           scored: scored,

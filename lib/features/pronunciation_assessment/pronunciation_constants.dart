@@ -22,4 +22,7 @@ class PronunciationConstants {
   static const int configRetryCount = 3;
   static const Duration configRetryDelay = Duration(milliseconds: 500);
   static const int maxAttempts = 3;
+  static const double excellentMin = 90;
+  static const double needsImprovMin = 60;
+  static const double phonicsExcellentMin = 95;
 }

@@ -5,7 +5,9 @@ import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
+import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/common/widgets/default_button_widget.dart';
+import 'package:micro_teaching_studio/features/course_audio/widgets/course_listen_control.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_svg_icon.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
@@ -71,13 +73,25 @@ class FluencyInstructionsCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppPadding.p16.h),
-          Text(
-            AppStrings.fluencyOutcomeLead.tr(),
-            style: getBoldStyle(
-              fontSize: FontSize.s12.sp,
-              color: ColorManager.navy,
-              height: 1.6,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  AppStrings.fluencyOutcomeLead.tr(),
+                  style: getBoldStyle(
+                    fontSize: FontSize.s12.sp,
+                    color: ColorManager.navy,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+              CourseListenControl(
+                asset: AudioAssets.fluencyObjectives(),
+                color: ColorManager.navy,
+                compact: true,
+              ),
+            ],
           ),
           Text(
             AppStrings.fluencyOutcomeBody.tr(),
@@ -99,12 +113,23 @@ class FluencyInstructionsCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppStrings.howToApply.tr(),
-                  style: getBoldStyle(
-                    fontSize: FontSize.s10.sp,
-                    color: ColorManager.royalBlue,
-                  ).copyWith(letterSpacing: AppLetterSpacing.label),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        AppStrings.howToApply.tr(),
+                        style: getBoldStyle(
+                          fontSize: FontSize.s10.sp,
+                          color: ColorManager.royalBlue,
+                        ).copyWith(letterSpacing: AppLetterSpacing.label),
+                      ),
+                    ),
+                    CourseListenControl(
+                      asset: AudioAssets.fluencyHowToApply(),
+                      color: ColorManager.navy,
+                      compact: true,
+                    ),
+                  ],
                 ),
                 SizedBox(height: AppPadding.p8.h),
                 Text(

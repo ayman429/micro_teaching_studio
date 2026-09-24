@@ -77,6 +77,7 @@ class PronunciationEngine {
     required String referenceText,
     required SpeechConfig config,
     bool enableProsody = true,
+    bool phonics = false,
   }) async {
     try {
       if (!await audioFile.exists()) {
@@ -126,7 +127,12 @@ class PronunciationEngine {
         log('Azure STT unexpected body=${response.body}');
         throw StateError(AppStrings.pronunciationNoResult);
       }
-      return _parse(Map<String, dynamic>.from(decoded), response.statusCode);
+      return _parse(
+        Map<String, dynamic>.from(decoded),
+        response.statusCode,
+        phonics: phonics,
+        referenceText: referenceText,
+      );
     } catch (error, stack) {
       if (error is StateError) rethrow;
       log('assess failed type=${error.runtimeType} error=$error',
@@ -185,7 +191,12 @@ class PronunciationEngine {
         http.ClientException('Connection closed while receiving data', url);
   }
 
-  PronunciationResult _parse(Map<String, dynamic> data, int httpStatus) {
+  PronunciationResult _parse(
+    Map<String, dynamic> data,
+    int httpStatus, {
+    bool phonics = false,
+    required String referenceText,
+  }) {
     final nBest = data['NBest'] is List && (data['NBest'] as List).isNotEmpty
         ? (data['NBest'] as List)[0]
         : null;
@@ -194,12 +205,59 @@ class PronunciationEngine {
     }
     final pron = _pronFromNBest(nBest);
     final rawWords = nBest['Words'] is List ? nBest['Words'] as List : [];
-    final words = rawWords.whereType<Map>().map(_parseWord).toList();
+    final words = rawWords
+        .whereType<Map>()
+        .map((word) => _parseWord(word, phonics: phonics))
+        .toList();
 
-    final score = _asDouble(pron['PronScore']) ?? _asDouble(pron['AccuracyScore']);
+    var score = _asDouble(pron['PronScore']) ?? _asDouble(pron['AccuracyScore']);
+    var pronScore = _asDouble(pron['PronScore']);
+    var accuracyScore = _asDouble(pron['AccuracyScore']);
+    var heard = (data['DisplayText'] ??
+            (nBest['Display'] ?? nBest['Lexical']))
+        ?.toString();
+    var scoredWords = words;
+    var phonicsMismatch = phonics &&
+        PronunciationResult.phonicsWordMismatch(heard, referenceText);
+    if (phonics && !phonicsMismatch) {
+      for (final word in words) {
+        if (!word.isInsertion) continue;
+        if (!PronunciationResult.phonicsWordMismatch(word.word, referenceText)) {
+          continue;
+        }
+        phonicsMismatch = true;
+        heard = word.word;
+        break;
+      }
+    }
+
+    if (phonicsMismatch) {
+      final heardWord = PronunciationResult.spokenWord(heard);
+      score = PronunciationResult.capPhonicsWrongWordScore(score);
+      pronScore = PronunciationResult.capPhonicsWrongWordScore(pronScore);
+      accuracyScore = PronunciationResult.capPhonicsWrongWordScore(accuracyScore);
+      scoredWords = words
+          .map(
+            (word) => word.isInsertion
+                ? word
+                : PronunciationWordScore(
+                    word: word.word,
+                    accuracy: PronunciationResult.capPhonicsWrongWordScore(
+                      word.accuracy,
+                    ),
+                    errorType: word.errorType,
+                    phonemes: word.phonemes,
+                    phonics: word.phonics,
+                    heardWord: heardWord,
+                    wrongWord: true,
+                  ),
+          )
+          .toList();
+    }
+
     PronunciationWordScore? weakestWord;
     PronunciationPhonemeScore? weakestPhoneme;
-    for (final word in words) {
+    for (final word in scoredWords) {
       if (word.word.isEmpty || word.isInsertion) continue;
       if (weakestWord == null ||
           (word.accuracy ?? 100) < (weakestWord.accuracy ?? 100)) {
@@ -213,40 +271,44 @@ class PronunciationEngine {
       }
     }
 
-    final heard = (data['DisplayText'] ??
-            (nBest['Display'] ?? nBest['Lexical']))
-        ?.toString();
-
     return PronunciationResult(
       raw: data,
-      pronScore: _asDouble(pron['PronScore']),
-      accuracyScore: _asDouble(pron['AccuracyScore']),
+      pronScore: pronScore,
+      accuracyScore: accuracyScore,
       fluencyScore: _asDouble(pron['FluencyScore']),
       completenessScore: _asDouble(pron['CompletenessScore']),
       prosodyScore: _asDouble(pron['ProsodyScore']),
-      words: words,
-      band: PronunciationResult.bandFromScore(score),
+      words: scoredWords,
+      band: PronunciationResult.bandFromScore(score, phonics: phonics),
       heardText: heard,
       recognitionStatus: data['RecognitionStatus']?.toString(),
       httpStatus: httpStatus,
       weakestWord: weakestWord?.word,
       weakestPhoneme: weakestPhoneme?.phoneme,
       heardPhoneme: weakestPhoneme?.heardPhoneme,
+      phonics: phonics,
     );
   }
 
-  PronunciationWordScore _parseWord(Map word) {
+  PronunciationWordScore _parseWord(Map word, {bool phonics = false}) {
     final assessment = _wordPron(word);
     final rawPhonemes = word['Phonemes'] is List ? word['Phonemes'] as List : [];
     return PronunciationWordScore(
       word: (word['Word'] ?? '').toString(),
       accuracy: _asDouble(assessment['AccuracyScore']),
       errorType: (assessment['ErrorType'] ?? 'None').toString(),
-      phonemes: rawPhonemes.whereType<Map>().map(_parsePhoneme).toList(),
+      phonemes: rawPhonemes
+          .whereType<Map>()
+          .map((phoneme) => _parsePhoneme(phoneme, phonics: phonics))
+          .toList(),
+      phonics: phonics,
     );
   }
 
-  PronunciationPhonemeScore _parsePhoneme(Map phoneme) {
+  PronunciationPhonemeScore _parsePhoneme(
+    Map phoneme, {
+    bool phonics = false,
+  }) {
     final assessment = _wordPron(phoneme);
     final expected = (phoneme['Phoneme'] ?? '').toString();
     String? heard;
@@ -277,6 +339,7 @@ class PronunciationEngine {
       accuracy: _asDouble(assessment['AccuracyScore']),
       heardPhoneme: heard,
       nBest: candidates,
+      phonics: phonics,
     );
   }
 

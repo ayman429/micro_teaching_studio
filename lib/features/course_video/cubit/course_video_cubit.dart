@@ -166,6 +166,7 @@ class CourseVideoCubit extends Cubit<CourseVideoState> {
           isPlaying: false,
           progress: 0,
           position: Duration.zero,
+          completed: true,
         ),
       );
     }

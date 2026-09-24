@@ -14,8 +14,6 @@ import 'package:micro_teaching_studio/features/auth/cubit/auth_state.dart';
 import 'package:micro_teaching_studio/features/auth/models/student_avatar.dart';
 import 'package:micro_teaching_studio/features/auth/widgets/auth_account_prompt.dart';
 import 'package:micro_teaching_studio/features/auth/widgets/login_form_card.dart';
-import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
-import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 
 class LoginPage extends StatefulWidget {
@@ -34,7 +32,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _userNameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  StudentAvatar _selectedAvatar = StudentAvatar.girl;
+  StudentAvatar _selectedAvatar = StudentAvatar.girl1;
 
   @override
   void dispose() {
@@ -72,12 +70,8 @@ class _LoginPageState extends State<LoginPage> {
       },
       builder: (context, state) {
         return CourseScaffold(
-          voiceCode: CourseConstants.loginVoiceCode,
           title: AppStrings.createAccountEnglishTitle.tr(),
-          currentIndex: CourseConstants.loginStepIndex,
-          onBack: () => CourseFlow.back(context),
-          onNext: state.isLoading ? null : _submit,
-          backEnabled: CourseFlow.hasPrevious(context),
+          showSkip: false,
           body: SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
               AppPadding.p16.w,
@@ -94,15 +88,6 @@ class _LoginPageState extends State<LoginPage> {
                     fontSize: FontSize.s22.sp,
                     color: ColorManager.navy,
                   ).copyWith(letterSpacing: AppLetterSpacing.tight),
-                ),
-                SizedBox(height: AppPadding.p8.h),
-                Text(
-                  AppStrings.personalDataShowsOnce.tr(),
-                  textAlign: TextAlign.center,
-                  style: getRegularStyle(
-                    fontSize: FontSize.s12.sp,
-                    color: ColorManager.slate,
-                  ),
                 ),
                 SizedBox(height: AppPadding.p16.h),
                 LoginFormCard(

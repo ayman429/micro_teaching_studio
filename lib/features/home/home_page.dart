@@ -16,7 +16,6 @@ import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_cubit.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_state.dart';
 import 'package:micro_teaching_studio/features/auth/models/student_avatar.dart';
-import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_loading_dialog.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
@@ -47,14 +46,10 @@ class _HomePageState extends State<HomePage> {
           builder: (context, progressState) {
             final progress = progressState.snapshot;
             return CourseScaffold(
-          voiceCode: CourseConstants.homeVoiceCode,
           title: AppStrings.homeEnglishTitle.tr(),
-          currentIndex: CourseConstants.homeStepIndex,
           closeAsset: Assets.assetsIconsLogout,
           onClose: () => _confirmLogout(context),
-          onBack: null,
-          onNext: () => CourseFlow.next(context),
-          backEnabled: false,
+          showSkip: false,
           body: Directionality(
             textDirection: ui.TextDirection.ltr,
             child: ListView(
@@ -92,27 +87,39 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => _openAims(context),
-                      child: Text(
-                        AppStrings.viewAimsAction.tr(),
-                        style: getBoldStyle(
-                          fontSize: FontSize.s11.sp,
-                          color: ColorManager.navy,
+                    Material(
+                      color: ColorManager.actionBlue,
+                      borderRadius: BorderRadius.circular(AppRadius.rCapsule.r),
+                      child: InkWell(
+                        onTap: () => _openAims(context),
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.rCapsule.r),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppPadding.p16.w,
+                            vertical: AppPadding.p8.h,
+                          ),
+                          child: Text(
+                            AppStrings.viewAimsAction.tr(),
+                            style: getBoldStyle(
+                              fontSize: FontSize.s14.sp,
+                              color: ColorManager.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: AppPadding.p4.h),
+                SizedBox(height: AppPadding.p24.h),
                 Text(
                   AppStrings.aimsOfTheProgramSubtitle.tr(),
-                  style: getRegularStyle(
-                    fontSize: FontSize.s11.sp,
-                    color: ColorManager.slate,
+                  style: getBoldStyle(
+                    fontSize: FontSize.s12.sp,
+                    color: ColorManager.slate800,
                   ),
                 ),
-                SizedBox(height: AppPadding.p20.h),
+                SizedBox(height: AppPadding.p8.h),
                 ...HomeModule.catalog.map((module) {
                   return Padding(
                     padding: EdgeInsets.only(bottom: AppPadding.p16.h),

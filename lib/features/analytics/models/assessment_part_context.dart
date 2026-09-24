@@ -33,8 +33,15 @@ class AssessmentPartContext {
     if (partType == AnalyticsConstants.fluencyPassage) {
       return AnalyticsConstants.itemParagraph;
     }
-    if (partType == AnalyticsConstants.phonicsWord) {
+    if (partType == AnalyticsConstants.phonicsWord ||
+        partType == AnalyticsConstants.targetWord) {
       return AnalyticsConstants.itemWord;
+    }
+    if (partType == AnalyticsConstants.spokenResponse) {
+      return AnalyticsConstants.itemSpoken;
+    }
+    if (partType == AnalyticsConstants.trueFalseQuiz) {
+      return AnalyticsConstants.itemQuiz;
     }
     return AnalyticsConstants.itemSession;
   }
@@ -94,7 +101,8 @@ class AssessmentPartContext {
 
   static _ParsedPart _parsePartId(String partId) {
     final segments = partId.split('-');
-    final moduleNumber = segments.isNotEmpty ? int.tryParse(segments[0]) ?? 0 : 0;
+    final moduleNumber =
+        segments.isNotEmpty ? int.tryParse(segments[0]) ?? 0 : 0;
     final sessionNumber =
         segments.length > 1 ? int.tryParse(segments[1]) ?? 0 : 0;
     final key = segments.length > 2 ? segments.sublist(2).join('-') : partId;
@@ -115,6 +123,32 @@ class AssessmentPartContext {
         partLabel: AnalyticsConstants.sessionKey,
       );
     }
+    final targetWord = _targetWord(moduleNumber, sessionNumber, key);
+    if (targetWord != null) {
+      return _ParsedPart(
+        moduleNumber: moduleNumber,
+        sessionNumber: sessionNumber,
+        partType: AnalyticsConstants.targetWord,
+        partLabel: targetWord,
+      );
+    }
+    final spokenLabel = _spokenLabel(moduleNumber, sessionNumber, key);
+    if (spokenLabel != null) {
+      return _ParsedPart(
+        moduleNumber: moduleNumber,
+        sessionNumber: sessionNumber,
+        partType: AnalyticsConstants.spokenResponse,
+        partLabel: spokenLabel,
+      );
+    }
+    if (key == 'quiz') {
+      return _ParsedPart(
+        moduleNumber: moduleNumber,
+        sessionNumber: sessionNumber,
+        partType: AnalyticsConstants.trueFalseQuiz,
+        partLabel: 'Quiz',
+      );
+    }
     return _ParsedPart(
       moduleNumber: moduleNumber,
       sessionNumber: sessionNumber,
@@ -122,6 +156,65 @@ class AssessmentPartContext {
       partLabel: key.tr(),
     );
   }
+}
+
+String? _spokenLabel(int module, int session, String key) {
+  if (module == 2 && session == 1) {
+    return const {
+      'q1': 'Classroom noise',
+      'q2': 'TPR',
+      'q3': 'Classroom expressions',
+    }[key];
+  }
+  if (module == 2 && session == 2) {
+    return const {
+      'q1': 'Noise again',
+      'q2': 'Teacher response',
+      'q3': 'Attention expressions',
+    }[key];
+  }
+  if (module == 3 && session == 1) {
+    return const {
+      'q1': 'Teaching stages',
+      'q2': 'Monument explanation',
+      'q3': 'Student question',
+      'q4': 'Teacher response',
+      'q5': 'Magnificent explanation',
+      'q6': 'Mask question',
+    }[key];
+  }
+  if (module == 3 && session == 2) {
+    return const {
+      'q1': 'Movement warm-up',
+      'q2': 'Jump and say',
+      'q3': 'Mistake reaction',
+      'q4': 'Eating picture',
+      'q5': 'Eating correction',
+    }[key];
+  }
+  if (module == 3 && session == 3) {
+    return const {
+      'q1': 'Lesson start',
+      'q2': 'TPR drinking',
+      'q3': 'Positive reinforcement',
+      'q4': 'Moaz technique',
+      'q5': 'Mistake correction',
+      'q6': 'Picture practice',
+    }[key];
+  }
+  return null;
+}
+
+String? _targetWord(int module, int session, String key) {
+  if (module == 3 && session == 1) {
+    return const {
+      'w1': 'Civilization',
+      'w2': 'Magnificent',
+      'w3': 'monuments',
+      'w4': 'Heritage',
+    }[key];
+  }
+  return null;
 }
 
 class _ParsedPart {

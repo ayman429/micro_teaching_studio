@@ -18,11 +18,13 @@ class CourseListenControl extends StatelessWidget {
     required this.asset,
     required this.color,
     this.enabled = true,
+    this.compact = false,
   });
 
   final String asset;
   final Color color;
   final bool enabled;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -40,34 +42,46 @@ class CourseListenControl extends StatelessWidget {
       child: BlocBuilder<CourseAudioCubit, CourseAudioState>(
         builder: (context, audio) {
           final playing = audio.isPlayingAsset(asset);
+          final button = CourseCircleIconButton(
+            asset: playing
+                ? Assets.assetsIconsHelpPause
+                : Assets.assetsIconsHelpPlay,
+            size: compact ? AppSize.s32.w : AppSize.s40.w,
+            iconSize: AppSize.s16.w,
+            backgroundColor: !enabled
+                ? ColorManager.slate200
+                : playing
+                    ? ColorManager.actionBlue
+                    : color,
+            onPressed: !enabled
+                ? null
+                : () => context.read<CourseAudioCubit>().toggle(asset),
+          );
+          final label = Text(
+            playing
+                ? AppStrings.tapToStopListen.tr()
+                : AppStrings.listenAction.tr(),
+            textAlign: TextAlign.center,
+            style: getRegularStyle(
+              fontSize: FontSize.s11.sp,
+              color: playing ? ColorManager.actionBlue : ColorManager.slate,
+            ),
+          );
+          if (compact) {
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                button,
+                SizedBox(width: AppPadding.p8.w),
+                label,
+              ],
+            );
+          }
           return Column(
             children: [
-              CourseCircleIconButton(
-                asset: playing
-                    ? Assets.assetsIconsHelpPause
-                    : Assets.assetsIconsHelpPlay,
-                size: AppSize.s40.w,
-                iconSize: AppSize.s16.w,
-                backgroundColor: !enabled
-                    ? ColorManager.slate200
-                    : playing
-                        ? ColorManager.actionBlue
-                        : color,
-                onPressed: !enabled
-                    ? null
-                    : () => context.read<CourseAudioCubit>().toggle(asset),
-              ),
+              button,
               SizedBox(height: AppPadding.p8.h),
-              Text(
-                playing
-                    ? AppStrings.tapToStopListen.tr()
-                    : AppStrings.listenAction.tr(),
-                textAlign: TextAlign.center,
-                style: getRegularStyle(
-                  fontSize: FontSize.s11.sp,
-                  color: playing ? ColorManager.actionBlue : ColorManager.slate,
-                ),
-              ),
+              label,
             ],
           );
         },

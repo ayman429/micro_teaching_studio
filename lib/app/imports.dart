@@ -12,6 +12,8 @@ import 'package:micro_teaching_studio/features/auth/cubit/auth_cubit.dart';
 import 'package:micro_teaching_studio/features/auth/data/auth_remote_data_source.dart';
 import 'package:micro_teaching_studio/features/auth/data/auth_repository.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
+import 'package:micro_teaching_studio/features/greetings/cubit/greetings_cubit.dart';
+import 'package:micro_teaching_studio/features/quiz/cubit/quiz_cubit.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:micro_teaching_studio/features/home/data/course_progress_store.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/cubit/pronunciation_cubit.dart';

@@ -71,24 +71,24 @@ class LoginFormCard extends StatelessWidget {
             SizedBox(height: AppPadding.p16.h),
             AuthFieldLabel(text: AppStrings.chooseAvatarLabel.tr()),
             SizedBox(height: AppPadding.p12.h),
-            Row(
-              children: [
-                Expanded(
-                  child: AvatarChoiceCard(
-                    avatar: StudentAvatar.girl,
-                    isSelected: selectedAvatar == StudentAvatar.girl,
-                    onTap: () => onAvatarSelected(StudentAvatar.girl),
-                  ),
-                ),
-                SizedBox(width: AppPadding.p12.w),
-                Expanded(
-                  child: AvatarChoiceCard(
-                    avatar: StudentAvatar.boy,
-                    isSelected: selectedAvatar == StudentAvatar.boy,
-                    onTap: () => onAvatarSelected(StudentAvatar.boy),
-                  ),
-                ),
-              ],
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: StudentAvatar.values.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: AppPadding.p12.h,
+                crossAxisSpacing: AppPadding.p12.w,
+                childAspectRatio: 0.82,
+              ),
+              itemBuilder: (context, index) {
+                final avatar = StudentAvatar.values[index];
+                return AvatarChoiceCard(
+                  avatar: avatar,
+                  isSelected: selectedAvatar == avatar,
+                  onTap: () => onAvatarSelected(avatar),
+                );
+              },
             ),
             SizedBox(height: AppPadding.p16.h),
             AuthPrimaryButton(

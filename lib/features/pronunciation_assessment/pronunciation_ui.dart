@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/cubit/pronunciation_state.dart';
@@ -55,6 +56,90 @@ String pronunciationMicHint(PronunciationState state, String idleKey) {
   if (state.isRecording) return AppStrings.pronunciationRecording.tr();
   if (state.isAssessing) return AppStrings.pronunciationAssessing.tr();
   return idleKey.tr();
+}
+
+String capitalizeWord(String value) {
+  final text = value.trim();
+  if (text.isEmpty) return text;
+  return '${text[0].toUpperCase()}${text.substring(1)}';
+}
+
+String pronunciationResultAudio(PronunciationBand band) {
+  switch (band) {
+    case PronunciationBand.excellent:
+      return AudioAssets.correctPronunciation();
+    case PronunciationBand.needsImprov:
+      return AudioAssets.needsImprovement();
+    case PronunciationBand.incorrect:
+      return AudioAssets.incorrectPronunciation();
+  }
+}
+
+String pronunciationResultLabel(PronunciationBand band) {
+  switch (band) {
+    case PronunciationBand.excellent:
+      return AppStrings.resultCorrectPronunciation.tr();
+    case PronunciationBand.needsImprov:
+      return AppStrings.resultNeedsImprovement.tr();
+    case PronunciationBand.incorrect:
+      return AppStrings.resultIncorrectPronunciation.tr();
+  }
+}
+
+class PronunciationErrorLine {
+  const PronunciationErrorLine({
+    required this.word,
+    required this.band,
+    required this.description,
+  });
+
+  final String word;
+  final PronunciationBand band;
+  final String description;
+}
+
+List<PronunciationErrorLine> pronunciationErrorLines(PronunciationResult result) {
+  final lines = <PronunciationErrorLine>[];
+  for (final word in result.words) {
+    if (word.band == PronunciationBand.excellent) continue;
+    final type = word.wrongWord
+        ? ((word.heardWord ?? '').trim().isEmpty
+            ? AppStrings.errorWrongWord.tr()
+            : AppStrings.errorYouSaid.tr(
+                namedArgs: {'heard': capitalizeWord(word.heardWord!)},
+              ))
+        : word.isOmission
+            ? AppStrings.errorOmission.tr()
+            : word.isInsertion
+                ? AppStrings.errorInsertion.tr()
+                : AppStrings.errorMispronunciation.tr();
+    final sounds = word.phonemes
+        .where(
+          (phoneme) =>
+              phoneme.hasWrongSound ||
+              phoneme.band != PronunciationBand.excellent,
+        )
+        .map((phoneme) {
+      final expected = _slash(phoneme.phoneme) ?? phoneme.phoneme;
+      final heard = _slash(phoneme.heardPhoneme);
+      if (heard == null) {
+        return AppStrings.expectedSound.tr(
+          namedArgs: {'expected': expected},
+        );
+      }
+      return AppStrings.expectedHeardSound.tr(
+        namedArgs: {'expected': expected, 'heard': heard},
+      );
+    }).join(' · ');
+    lines.add(
+      PronunciationErrorLine(
+        word: capitalizeWord(word.word),
+        band: word.band,
+        description: sounds.isEmpty ? type : '$type ($sounds)',
+      ),
+    );
+  }
+  return lines;
 }
 
 String pronunciationTwinTip(PronunciationState state, String fallbackKey) {

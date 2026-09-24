@@ -103,4 +103,20 @@ Future<void> initAppModule() async {
       instance<CourseAudioCubit>(),
     ),
   );
+  instance.registerFactory<GreetingsCubit>(
+    () => GreetingsCubit(
+      instance<SpeechConfigRepository>(),
+      instance<PronunciationEngine>(),
+      instance<AnalyticsRepository>(),
+      instance<CourseProgressCubit>(),
+      instance<CourseAudioCubit>(),
+    ),
+  );
+  instance.registerFactory<QuizCubit>(
+    () => QuizCubit(
+      instance<AnalyticsRepository>(),
+      instance<CourseProgressCubit>(),
+      instance<CourseAudioCubit>(),
+    ),
+  );
 }

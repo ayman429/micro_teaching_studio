@@ -89,7 +89,7 @@ class AuthRepository {
           ? user.userName
           : (cachedUserName != guest ? cachedUserName : user.userName),
       email: user.email.isNotEmpty ? user.email : _prefs.getUserEmail(),
-      avatar: user.avatar != StudentAvatar.girl || cachedAvatar.isEmpty
+      avatar: user.avatar != StudentAvatar.girl1 || cachedAvatar.isEmpty
           ? user.avatar
           : StudentAvatar.fromName(cachedAvatar),
     );

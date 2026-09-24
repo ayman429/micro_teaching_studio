@@ -6,6 +6,7 @@ import 'package:micro_teaching_studio/app/app_prefs.dart';
 import 'package:micro_teaching_studio/features/analytics/analytics_constants.dart';
 import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
 import 'package:micro_teaching_studio/features/analytics/models/feedback_tier.dart';
+import 'package:micro_teaching_studio/features/analytics/models/lesson_analytics.dart';
 import 'package:micro_teaching_studio/features/analytics/models/stored_part_state.dart';
 import 'package:micro_teaching_studio/features/home/models/course_progress.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/models/pronunciation_result.dart';
@@ -43,6 +44,7 @@ class AnalyticsRepository {
   Future<void>? _hydrateInFlight;
   final Map<String, StoredPartState> _parts = {};
   final Map<String, Map<String, dynamic>> _partDocs = {};
+  final Map<String, List<Map<String, dynamic>>> _attemptDocs = {};
   final Set<String> _completedIds = {};
 
   bool get isHydrated => _hydrated;
@@ -54,11 +56,26 @@ class AnalyticsRepository {
         const StoredPartState(attemptCount: 0, locked: false);
   }
 
+  Map<String, dynamic>? peekPartDoc(String partId) {
+    final doc = _partDocs[partId];
+    if (doc == null) return null;
+    return Map<String, dynamic>.from(doc);
+  }
+
+  List<Map<String, dynamic>> peekAttempts(String partId) {
+    final attempts = _attemptDocs[partId];
+    if (attempts == null) return const [];
+    return [
+      for (final attempt in attempts) Map<String, dynamic>.from(attempt),
+    ];
+  }
+
   void resetCache() {
     _hydrated = false;
     _hydrateInFlight = null;
     _parts.clear();
     _partDocs.clear();
+    _attemptDocs.clear();
     _completedIds.clear();
   }
 
@@ -120,7 +137,21 @@ class AnalyticsRepository {
 
       _parts.clear();
       _partDocs.clear();
+      _attemptDocs.clear();
       _completedIds.clear();
+      for (final doc in attemptSnap.docs) {
+        final data = doc.data();
+        final partId = (data['partId'] as String?)?.trim() ?? '';
+        if (partId.isEmpty) continue;
+        _attemptDocs.putIfAbsent(partId, () => []).add(data);
+      }
+      for (final attempts in _attemptDocs.values) {
+        attempts.sort((left, right) {
+          final leftNumber = (left['attemptNumber'] as num?)?.toInt() ?? 0;
+          final rightNumber = (right['attemptNumber'] as num?)?.toInt() ?? 0;
+          return leftNumber.compareTo(rightNumber);
+        });
+      }
       for (final doc in partSnap.docs) {
         final data = doc.data();
         final partId = (data['partId'] as String?)?.trim() ?? '';
@@ -134,6 +165,7 @@ class AnalyticsRepository {
                 attemptData,
                 wordsByAttempt[attemptId] ?? const [],
                 phonemesByAttempt[attemptId] ?? const [],
+                phonics: data['partType'] == AnalyticsConstants.phonicsWord,
               );
         _parts[partId] = _storedFromPart(data, result);
         if (_parts[partId]!.locked) _completedIds.add(partId);
@@ -196,10 +228,22 @@ class AnalyticsRepository {
     final attemptCount = (data['attemptCount'] as num?)?.toInt() ?? 0;
     final status = data['status'] as String? ?? '';
     final latestBand = data['latestBand'] as String? ?? '';
-    final locked = status == AnalyticsConstants.statusCompleted ||
-        data['locked'] == true ||
-        latestBand == AnalyticsConstants.bandExcellent ||
-        attemptCount >= PronunciationConstants.maxAttempts;
+    final contentJudged = _contentJudged(data['partType'] as String?);
+    final outcome = (data['contentOutcome'] as String?)?.trim() ?? '';
+    final attemptCap = (data['maxAttempts'] as num?)?.toInt();
+    final limit = attemptCap == null || attemptCap <= 0
+        ? PronunciationConstants.maxAttempts
+        : attemptCap;
+    final locked = contentJudged
+        ? status == AnalyticsConstants.statusCompleted ||
+            data['locked'] == true ||
+            outcome == AnalyticsConstants.contentCorrect ||
+            outcome == AnalyticsConstants.contentIncorrect ||
+            attemptCount >= limit
+        : status == AnalyticsConstants.statusCompleted ||
+            data['locked'] == true ||
+            latestBand == AnalyticsConstants.bandExcellent ||
+            attemptCount >= limit;
     return StoredPartState(
       attemptCount: attemptCount,
       locked: locked,
@@ -207,11 +251,48 @@ class AnalyticsRepository {
     );
   }
 
+  bool _contentJudged(String? partType) {
+    return partType == AnalyticsConstants.spokenResponse ||
+        partType == AnalyticsConstants.trueFalseQuiz ||
+        partType == AnalyticsConstants.targetWord;
+  }
+
+  Future<void> saveQuizDraft({
+    required AssessmentPartContext part,
+    required List<Map<String, dynamic>> statements,
+  }) async {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    try {
+      if (!_hydrated) await hydrate();
+    } catch (error, stack) {
+      log('analytics quiz draft hydrate: $error', stackTrace: stack);
+    }
+    if (!_partDocs.containsKey(part.partId)) {
+      await reachPart(part);
+    }
+    final data = <String, dynamic>{
+      'statements': statements,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    await _commitOne(
+      _partProgress.doc(_partDocId(uid, part.partId)),
+      data,
+      merge: true,
+      label: 'quiz_draft',
+    );
+    final cached = Map<String, dynamic>.from(_partDocs[part.partId] ?? {});
+    cached['statements'] = statements;
+    cached['partType'] = part.partType;
+    _partDocs[part.partId] = cached;
+  }
+
   PronunciationResult? _resultFrom(
     Map<String, dynamic> data,
     List<QueryDocumentSnapshot<Map<String, dynamic>>> wordSnap,
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> phonemeSnap,
-  ) {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> phonemeSnap, {
+    bool phonics = false,
+  }) {
     final phonemesByWord =
         <int, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
     for (final doc in phonemeSnap) {
@@ -231,8 +312,17 @@ class AnalyticsRepository {
           final right = (b.data()['phonemeIndex'] as num?)?.toInt() ?? 0;
           return left.compareTo(right);
         });
+      final expectedWord = map['expectedWord'] as String? ?? '';
+      final heardWord = phonics
+          ? PronunciationResult.spokenWord(data['heardText'] as String?)
+          : null;
+      final wrongWord = phonics &&
+          PronunciationResult.phonicsWordMismatch(
+            heardWord ?? data['heardText'] as String?,
+            expectedWord,
+          );
       return PronunciationWordScore(
-        word: map['expectedWord'] as String? ?? '',
+        word: expectedWord,
         accuracy: _asDouble(map['accuracy']),
         errorType: map['errorType'] as String? ?? 'None',
         phonemes: phonemeDocs.map((phonemeDoc) {
@@ -242,8 +332,12 @@ class AnalyticsRepository {
             accuracy: _asDouble(phoneme['accuracy']),
             heardPhoneme: _emptyToNull(phoneme['heardPhoneme'] as String?),
             nBest: _nBestFromMap(phoneme),
+            phonics: phonics,
           );
         }).toList(),
+        phonics: phonics,
+        heardWord: heardWord,
+        wrongWord: wrongWord,
       );
     }).toList();
     return PronunciationResult(
@@ -261,6 +355,7 @@ class AnalyticsRepository {
       weakestWord: _emptyToNull(data['weakestWord'] as String?),
       weakestPhoneme: _emptyToNull(data['weakestPhoneme'] as String?),
       heardPhoneme: _emptyToNull(data['heardPhoneme'] as String?),
+      phonics: phonics,
     );
   }
 
@@ -293,6 +388,7 @@ class AnalyticsRepository {
     required DateTime endedAt,
     required String language,
     required String region,
+    LessonAnalytics? lesson,
   }) {
     return _record(
       part: part,
@@ -304,6 +400,71 @@ class AnalyticsRepository {
       outcome: AnalyticsConstants.outcomeScored,
       result: result,
       twinTip: twinTip,
+      lesson: lesson,
+    );
+  }
+
+  Future<void> recordLessonAttempt({
+    required AssessmentPartContext part,
+    required int attemptNumber,
+    required LessonAnalytics lesson,
+    required DateTime startedAt,
+    required DateTime endedAt,
+    required String language,
+    required String region,
+    PronunciationResult? result,
+    int maxAttempts = PronunciationConstants.maxAttempts,
+  }) {
+    return _record(
+      part: part,
+      attemptNumber: attemptNumber,
+      startedAt: startedAt,
+      endedAt: endedAt,
+      language: language,
+      region: region,
+      outcome: AnalyticsConstants.outcomeScored,
+      result: result,
+      twinTip: lesson.lessonFeedback,
+      lesson: lesson,
+      maxAttempts: maxAttempts,
+    );
+  }
+
+  Future<void> reachPart(
+    AssessmentPartContext part, {
+    int maxAttempts = PronunciationConstants.maxAttempts,
+  }) async {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    try {
+      if (!_hydrated) await hydrate();
+    } catch (error, stack) {
+      log('analytics reach hydrate: $error', stackTrace: stack);
+    }
+    if (_partDocs.containsKey(part.partId)) return;
+    final data = <String, dynamic>{
+      ..._placement(uid, part),
+      'status': AnalyticsConstants.statusInProgress,
+      'locked': false,
+      'attemptCount': 0,
+      'maxAttempts': maxAttempts,
+      'contentOutcome': '',
+      'contentMatched': false,
+      'lessonFeedback': '',
+      'heardText': '',
+      'resumeReached': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    await _commitOne(
+      _partProgress.doc(_partDocId(uid, part.partId)),
+      data,
+      merge: true,
+      label: 'part_reached',
+    );
+    _partDocs[part.partId] = Map<String, dynamic>.from(data);
+    _parts[part.partId] = const StoredPartState(
+      attemptCount: 0,
+      locked: false,
     );
   }
 
@@ -376,6 +537,8 @@ class AnalyticsRepository {
     PronunciationResult? result,
     String twinTip = '',
     String errorMessage = '',
+    LessonAnalytics? lesson,
+    int maxAttempts = PronunciationConstants.maxAttempts,
   }) async {
     final uid = _uid;
     if (uid.isEmpty) {
@@ -409,50 +572,72 @@ class AnalyticsRepository {
       feedbackLabel: FeedbackTier.labelOf(feedbackLevel),
       previous: previous,
       scored: scored,
+      lesson: lesson,
+      heardText: result?.heardText ?? '',
+      maxAttempts: maxAttempts,
     );
 
-    await _commitOne(attemptRef, {
-      ..._placement(uid, part),
-      'attemptId': attemptId,
-      'referenceText': _clip(part.referenceText, 8000),
-      'referenceIpa': _clip(part.referenceIpa ?? '', 400),
+    await _commitOne(
+        attemptRef,
+        {
+          ..._placement(uid, part),
+          'attemptId': attemptId,
+          'referenceText': _clip(part.referenceText, 8000),
+          'referenceIpa': _clip(part.referenceIpa ?? '', 400),
+          'attemptNumber': attemptNumber,
+          'startedAt': Timestamp.fromDate(startedAt),
+          'endedAt': Timestamp.fromDate(endedAt),
+          'durationMs': endedAt.difference(startedAt).inMilliseconds,
+          'outcome': outcome,
+          'band': band,
+          'feedbackLevel': feedbackLevel,
+          'feedbackLabel': FeedbackTier.labelOf(feedbackLevel),
+          'twinTip': _clip(twinTip, 2000),
+          'heardText': _clip(result?.heardText ?? '', 8000),
+          'recognitionStatus': _clip(result?.recognitionStatus ?? '', 64),
+          'pronScore': result?.pronScore,
+          'accuracyScore': result?.accuracyScore,
+          'fluencyScore': result?.fluencyScore,
+          'completenessScore': result?.completenessScore,
+          'prosodyScore': result?.prosodyScore,
+          'httpStatus': result?.httpStatus,
+          'language': _clip(language, 16),
+          'region': _clip(region, 64),
+          'engine': AnalyticsConstants.engineAzureSpeech,
+          'wordExcellentCount': counts.excellent,
+          'wordNeedsImprovCount': counts.needsImprov,
+          'wordIncorrectCount': counts.incorrect,
+          'wordOmissionCount': counts.omission,
+          'wordInsertionCount': counts.insertion,
+          'correctWords': _clip(lists.correct, 8000),
+          'needsImprovWords': _clip(lists.needsImprov, 8000),
+          'incorrectWords': _clip(lists.incorrect, 8000),
+          'phonemeExcellentCount': counts.phonemeExcellent,
+          'phonemeNeedsImprovCount': counts.phonemeNeedsImprov,
+          'phonemeIncorrectCount': counts.phonemeIncorrect,
+          'weakestWord': _clip(result?.weakestWord ?? '', 160),
+          'weakestPhoneme': _clip(result?.weakestPhoneme ?? '', 64),
+          'heardPhoneme': _clip(result?.heardPhoneme ?? '', 64),
+          'errorMessage': _clip(errorMessage, 200),
+          if (lesson != null) 'contentOutcome': lesson.contentOutcome,
+          if (lesson != null) 'contentMatched': lesson.contentMatched,
+          if (lesson != null)
+            'lessonFeedback': _clip(lesson.lessonFeedback, 2000),
+          if (lesson != null && lesson.statements.isNotEmpty)
+            'statements': lesson.statements,
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+        label: 'attempt');
+    _attemptDocs.putIfAbsent(part.partId, () => []).add({
+      'partId': part.partId,
       'attemptNumber': attemptNumber,
-      'startedAt': Timestamp.fromDate(startedAt),
-      'endedAt': Timestamp.fromDate(endedAt),
-      'durationMs': endedAt.difference(startedAt).inMilliseconds,
-      'outcome': outcome,
-      'band': band,
-      'feedbackLevel': feedbackLevel,
-      'feedbackLabel': FeedbackTier.labelOf(feedbackLevel),
-      'twinTip': _clip(twinTip, 2000),
-      'heardText': _clip(result?.heardText ?? '', 8000),
-      'recognitionStatus': _clip(result?.recognitionStatus ?? '', 64),
-      'pronScore': result?.pronScore,
-      'accuracyScore': result?.accuracyScore,
-      'fluencyScore': result?.fluencyScore,
-      'completenessScore': result?.completenessScore,
-      'prosodyScore': result?.prosodyScore,
-      'httpStatus': result?.httpStatus,
-      'language': _clip(language, 16),
-      'region': _clip(region, 64),
-      'engine': AnalyticsConstants.engineAzureSpeech,
-      'wordExcellentCount': counts.excellent,
-      'wordNeedsImprovCount': counts.needsImprov,
-      'wordIncorrectCount': counts.incorrect,
-      'wordOmissionCount': counts.omission,
-      'wordInsertionCount': counts.insertion,
-      'correctWords': _clip(lists.correct, 8000),
-      'needsImprovWords': _clip(lists.needsImprov, 8000),
-      'incorrectWords': _clip(lists.incorrect, 8000),
-      'phonemeExcellentCount': counts.phonemeExcellent,
-      'phonemeNeedsImprovCount': counts.phonemeNeedsImprov,
-      'phonemeIncorrectCount': counts.phonemeIncorrect,
-      'weakestWord': _clip(result?.weakestWord ?? '', 160),
-      'weakestPhoneme': _clip(result?.weakestPhoneme ?? '', 64),
-      'heardPhoneme': _clip(result?.heardPhoneme ?? '', 64),
-      'errorMessage': _clip(errorMessage, 200),
-      'createdAt': FieldValue.serverTimestamp(),
-    }, label: 'attempt');
+      'heardText': result?.heardText ?? '',
+      if (lesson != null) 'contentOutcome': lesson.contentOutcome,
+      if (lesson != null) 'contentMatched': lesson.contentMatched,
+      if (lesson != null) 'lessonFeedback': lesson.lessonFeedback,
+      if (lesson != null && lesson.statements.isNotEmpty)
+        'statements': lesson.statements,
+    });
     _rememberPart(
       partId: part.partId,
       data: progressPayload,
@@ -567,16 +752,28 @@ class AnalyticsRepository {
     required String feedbackLabel,
     required Map<String, dynamic>? previous,
     required bool scored,
+    LessonAnalytics? lesson,
+    String heardText = '',
+    int maxAttempts = PronunciationConstants.maxAttempts,
   }) {
     final alreadyCompleted =
         previous?['status'] == AnalyticsConstants.statusCompleted;
     final previousBestScore = _asDouble(previous?['bestPronScore']);
     final previousBestBand = previous?['bestBand'] as String? ?? '';
+    final contentJudged = _contentJudged(part.partType);
+    final keepAttempt = lesson?.noResponse ?? false;
+    final previousAttempts = (previous?['attemptCount'] as num?)?.toInt() ?? 0;
+    final nextAttemptCount = keepAttempt
+        ? (previousAttempts > attemptNumber ? previousAttempts : attemptNumber)
+        : attemptNumber;
     final locked = alreadyCompleted ||
-        (scored &&
+        (lesson?.settles ?? false) ||
+        (!contentJudged &&
+            scored &&
             (band == AnalyticsConstants.bandExcellent ||
-                attemptNumber >= PronunciationConstants.maxAttempts));
+                nextAttemptCount >= maxAttempts));
     final isBest = scored &&
+        !keepAttempt &&
         _isBetter(
           band: band,
           score: pronScore,
@@ -590,17 +787,24 @@ class AnalyticsRepository {
           : AnalyticsConstants.statusInProgress,
       'locked': locked,
       'latestFeedbackLabel': feedbackLabel,
-      'attemptCount': attemptNumber,
-      'maxAttempts': PronunciationConstants.maxAttempts,
-      'latestAttemptId': attemptId,
-      'latestBand': band,
-      'latestPronScore': pronScore,
+      'attemptCount': nextAttemptCount,
+      'maxAttempts': maxAttempts,
+      if (!keepAttempt) 'latestAttemptId': attemptId,
+      if (!keepAttempt) 'latestBand': band,
+      if (!keepAttempt) 'latestPronScore': pronScore,
       'bestAttemptId': isBest ? attemptId : previous?['bestAttemptId'],
       'bestBand': isBest ? band : previousBestBand,
       'bestPronScore': isBest ? pronScore : previousBestScore,
-      'firstAttemptAt': previous?['firstAttemptAt'] ?? FieldValue.serverTimestamp(),
+      'firstAttemptAt':
+          previous?['firstAttemptAt'] ?? FieldValue.serverTimestamp(),
       'lastAttemptAt': FieldValue.serverTimestamp(),
       if (locked) 'completedAt': FieldValue.serverTimestamp(),
+      if (lesson != null) 'contentOutcome': lesson.contentOutcome,
+      if (lesson != null) 'contentMatched': lesson.contentMatched,
+      if (lesson != null) 'lessonFeedback': _clip(lesson.lessonFeedback, 2000),
+      if (lesson != null && !keepAttempt) 'heardText': _clip(heardText, 8000),
+      if (lesson != null && lesson.statements.isNotEmpty)
+        'statements': lesson.statements,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }

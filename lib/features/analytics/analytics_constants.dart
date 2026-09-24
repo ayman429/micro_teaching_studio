@@ -8,9 +8,16 @@ class AnalyticsConstants {
   static const String fluencyPassage = 'fluency_passage';
   static const String phonicsWord = 'phonics_word';
   static const String sessionUnit = 'session_unit';
+  static const String spokenResponse = 'spoken_response';
+  static const String trueFalseQuiz = 'true_false_quiz';
+  static const String targetWord = 'target_word';
 
   static const String outcomeScored = 'scored';
   static const String outcomeFailed = 'failed';
+  static const String contentCorrect = 'correct';
+  static const String contentRetry = 'retry';
+  static const String contentIncorrect = 'incorrect';
+  static const String contentNoResponse = 'no_response';
 
   static const String statusNotStarted = 'not_started';
   static const String statusInProgress = 'in_progress';
@@ -27,6 +34,8 @@ class AnalyticsConstants {
   static const String itemParagraph = 'Paragraph';
   static const String itemWord = 'Word';
   static const String itemSession = 'Session';
+  static const String itemSpoken = 'Spoken response';
+  static const String itemQuiz = 'Quiz';
 
   static const int batchLimit = 400;
   static const Duration writeTimeout = Duration(seconds: 30);

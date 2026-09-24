@@ -13,8 +13,133 @@ class AudioAssets {
 
   static String fluencyParagraph() => file(1, 1, 'paragraph.mp3');
 
+  static String fluencyObjectives() => file(1, 1, 'fluency_objectives.mp3');
+
+  static String fluencyHowToApply() => file(1, 1, 'how to apply.mp3');
+
+  static List<String> fluencyInstructionsSequence() => [
+        fluencyObjectives(),
+        fluencyHowToApply(),
+      ];
+
   static String phonicsClip(String word) =>
       file(1, 2, '${word.trim().toLowerCase()}.mp3');
+
+  static String aimsTwinIntro() => '$audioPath/aims_AI_twin_intro.mp3';
+
+  static String aimsObjectives() => '$audioPath/aims_objectives.mp3';
+
+  static String correctPronunciation() =>
+      '$audioPath/correct_pronunciation.mp3';
+
+  static String needsImprovement() => '$audioPath/needs_improvement.mp3';
+
+  static String incorrectPronunciation() =>
+      '$audioPath/incorrect_pronunciation.mp3';
+
+  static String greetingsVoice(int index) => file(2, 1, 'voice $index.mp3');
+
+  static String greetingsExcellent() => file(2, 1, 'Excellent..mp3');
+
+  static String greetingsTryAgain() => file(2, 1, 'try agin.mp3');
+
+  static String greetingsExhausted() => file(2, 1, 'false.mp3');
+
+  static String greetingsExcellentRules() => file(2, 1, 'true 3.mp3');
+
+  static String greetingsVideo() => file(2, 1, 'm2l1.mp4');
+
+  static String quizPrompt() => file(2, 1, 'Assessment/quiz.mp3');
+
+  static String quizCorrect() => file(2, 1, 'Assessment/Correct.mp3');
+
+  static String quizTryAgain() => file(2, 1, 'Assessment/try agin.mp3');
+
+  static String quizReview() => file(2, 1, 'Assessment/false.mp3');
+
+  static String classroomVoice(int index) {
+    if (index == 1) return file(2, 2, 'Voice (1).mp3');
+    if (index == 5) return file(2, 2, 'voice (5).mp3');
+    return file(2, 2, 'voice $index.mp3');
+  }
+
+  static String classroomVideo() => file(2, 2, 'm2l2.mp4');
+
+  static String classroomTrue() => file(2, 2, 'true 2.mp3');
+
+  static String classroomTryAgain() => file(2, 2, 'try agin.mp3');
+
+  static String classroomExhausted() => file(2, 2, 'false.mp3');
+
+  static String classroomQuizFirst() => file(2, 2, 'Assessment/quiz 1.mp3');
+
+  static String classroomQuizSecond() => file(2, 2, 'Assessment/quiz 2.mp3');
+
+  static String classroomQuizCorrect() => file(2, 2, 'Assessment/true.mp3');
+
+  static String classroomQuizTryAgain() =>
+      file(2, 2, 'Assessment/try agin.mp3');
+
+  static String classroomQuizReview() => file(2, 2, 'Assessment/false.mp3');
+
+  static String vocabVoice(int index) => file(3, 1, 'voice $index.mp3');
+
+  static String vocabVideo() => file(3, 1, 'm3l1.mp4');
+
+  static String vocabFeed() => file(3, 1, 'feed.mp3');
+
+  static String vocabExcellent() => file(3, 1, 'Excellent..mp3');
+
+  static String vocabTryAgain() => file(3, 1, 'try again.mp3');
+
+  static String vocabIncorrect() => file(3, 1, 'Incorrect.mp3');
+
+  static String vocabQuizClip(int index) =>
+      file(3, 1, 'Assessment/quiz $index.mp3');
+
+  static String vocabQuizCorrect() => file(3, 1, 'Assessment/true.mp3');
+
+  static String vocabQuizTryAgain() => file(3, 1, 'Assessment/try agin.mp3');
+
+  static String vocabQuizReview() => file(3, 1, 'Assessment/false.mp3');
+
+  static String grammarVoice(int index) => file(3, 2, 'voice $index.mp3');
+
+  static String grammarVideo() => file(3, 2, 'm3l2.mp4');
+
+  static String grammarExcellent() => file(3, 2, 'Excellent..mp3');
+
+  static String grammarTryAgain() => file(3, 2, 'try again.mp3');
+
+  static String grammarIncorrect() => file(3, 2, 'Incorrect.mp3');
+
+  static String grammarQuizClip(int index) =>
+      file(3, 2, 'Assessment/quiz $index.mp3');
+
+  static String grammarQuizCorrect() => file(3, 2, 'Assessment/true.mp3');
+
+  static String grammarQuizTryAgain() => file(3, 2, 'Assessment/try agin.mp3');
+
+  static String grammarQuizReview() => file(3, 2, 'Assessment/false.mp3');
+
+  static String presentationVoice(int index) => file(3, 3, 'voice $index.mp3');
+
+  static String presentationVideo() => file(3, 3, 'm3l3.mp4');
+
+  static String presentationExcellent() => file(3, 3, 'Excellent..mp3');
+
+  static String presentationTryAgain() => file(3, 3, 'try again.mp3');
+
+  static String presentationIncorrect() => file(3, 3, 'Incorrect.mp3');
+
+  static String presentationQuizPrompt() => file(3, 3, 'Assessment/quiz.mp3');
+
+  static String presentationQuizCorrect() => file(3, 3, 'Assessment/true.mp3');
+
+  static String presentationQuizTryAgain() =>
+      file(3, 3, 'Assessment/try agin.mp3');
+
+  static String presentationQuizReview() => file(3, 3, 'Assessment/false.mp3');
 }
 
 class VideoAssets {

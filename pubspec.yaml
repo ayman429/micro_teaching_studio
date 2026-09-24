@@ -87,6 +87,7 @@ dependencies:
   path_provider:
   record: ^6.1.2
   just_audio: ^0.10.5
+  flutter_avif: ^3.1.0
   permission_handler: ^11.3.0
 #  cloud_firestore: ^4.17.5
   # chat packages ============
@@ -143,13 +144,22 @@ flutter:
     - assets/icons/
     - assets/pdf/
     - assets/audio/
+    - assets/audio/module1/session1/fluency_objectives.mp3
+    - assets/audio/module1/session1/objectives.mp3
+    - assets/audio/module1/session1/how to apply.mp3
+    - assets/audio/module1/session1/paragraph.mp3
     - assets/audio/module1/session1/
     - assets/audio/module1/session2/
     - assets/audio/module2/session1/
+    - assets/audio/module2/session1/Assessment/
     - assets/audio/module2/session2/
+    - assets/audio/module2/session2/Assessment/
     - assets/audio/module3/session1/
+    - assets/audio/module3/session1/Assessment/
     - assets/audio/module3/session2/
+    - assets/audio/module3/session2/Assessment/
     - assets/audio/module3/session3/
+    - assets/audio/module3/session3/Assessment/
     - assets/videos/
     - shorebird.yaml
 
@@ -213,10 +223,15 @@ flutter_assets:
     - assets/audio/module1/session1/
     - assets/audio/module1/session2/
     - assets/audio/module2/session1/
+    - assets/audio/module2/session1/Assessment/
     - assets/audio/module2/session2/
+    - assets/audio/module2/session2/Assessment/
     - assets/audio/module3/session1/
+    - assets/audio/module3/session1/Assessment/
     - assets/audio/module3/session2/
+    - assets/audio/module3/session2/Assessment/
     - assets/audio/module3/session3/
+    - assets/audio/module3/session3/Assessment/
     - assets/videos/
   output_path: lib/images_urls/
   filename: assets.dart

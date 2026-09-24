@@ -5,8 +5,6 @@ import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
-import 'package:micro_teaching_studio/features/course_shell/widgets/course_svg_icon.dart';
-import 'package:micro_teaching_studio/images_urls/assets.dart';
 
 class PhonicsBanner extends StatelessWidget {
   const PhonicsBanner({super.key});
@@ -20,47 +18,27 @@ class PhonicsBanner extends StatelessWidget {
         color: ColorManager.navy,
         borderRadius: BorderRadius.circular(AppRadius.r20.r),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: AppSize.s48.w,
-            height: AppSize.s48.w,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: ColorManager.onDarkOverlay,
-              borderRadius: BorderRadius.circular(AppRadius.r16.r),
-            ),
-            child: CourseSvgIcon(
-              asset: Assets.assetsIconsAbc,
-              size: AppSize.s24.w,
+          Text(
+            AppStrings.phonicsTraining.tr(),
+            style: getBoldStyle(
+              fontSize: FontSize.s13.sp,
+              color: ColorManager.white,
             ),
           ),
-          SizedBox(width: AppPadding.p12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.phonicsTraining.tr(),
-                  style: getBoldStyle(
-                    fontSize: FontSize.s13.sp,
-                    color: ColorManager.white,
-                  ),
-                ),
-                SizedBox(height: AppPadding.p4.h),
-                Text(
-                  AppStrings.phonicsSessionSubtitle.tr(
-                    namedArgs: {
-                      'module': '1',
-                      'session': '2',
-                    },
-                  ),
-                  style: getRegularStyle(
-                    fontSize: FontSize.s11.sp,
-                    color: ColorManager.onNavyMuted,
-                  ),
-                ),
-              ],
+          SizedBox(height: AppPadding.p4.h),
+          Text(
+            AppStrings.phonicsSessionSubtitle.tr(
+              namedArgs: {
+                'module': '1',
+                'session': '2',
+              },
+            ),
+            style: getRegularStyle(
+              fontSize: FontSize.s11.sp,
+              color: ColorManager.onNavyMuted,
             ),
           ),
         ],

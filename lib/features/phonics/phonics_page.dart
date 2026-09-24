@@ -4,15 +4,14 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:micro_teaching_studio/app/app_functions.dart';
 import 'package:micro_teaching_studio/app/imports.dart';
+import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
-import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_word.dart';
@@ -46,7 +45,7 @@ class _PhonicsPageState extends State<PhonicsPage> {
         BlocProvider(
           create: (_) {
             final cubit = instance<PronunciationCubit>();
-            unawaited(cubit.restore(_partFor(0)));
+            unawaited(_restoreAndListen(cubit, 0));
             return cubit;
           },
         ),
@@ -64,12 +63,8 @@ class _PhonicsPageState extends State<PhonicsPage> {
           );
         },
         child: CourseScaffold(
-          voiceCode: CourseConstants.phonicsVoiceCode,
           title: AppStrings.phonicsEnglishTitle.tr(),
-          currentIndex: CourseConstants.phonicsStepIndex,
           bodyGradient: ColorManager.gradientFluencySurface,
-          onBack: () => CourseFlow.back(context),
-          onNext: () => CourseFlow.next(context),
           body: ListView(
             padding: EdgeInsets.fromLTRB(
               AppPadding.p16.w,
@@ -94,9 +89,10 @@ class _PhonicsPageState extends State<PhonicsPage> {
                       onTap: () {
                         setState(() => _selectedIndex = index);
                         unawaited(
-                          context.read<PronunciationCubit>().restore(
-                                _partFor(index),
-                              ),
+                          _restoreAndListen(
+                            context.read<PronunciationCubit>(),
+                            index,
+                          ),
                         );
                       },
                     );
@@ -135,10 +131,24 @@ class _PhonicsPageState extends State<PhonicsPage> {
       final next = _selectedIndex + 1;
       setState(() => _selectedIndex = next);
       if (!context.mounted) return;
-      await context.read<PronunciationCubit>().restore(_partFor(next));
+      await _restoreAndListen(
+        context.read<PronunciationCubit>(),
+        next,
+      );
       return;
     }
     CourseFlow.next(context);
+  }
+
+  Future<void> _restoreAndListen(PronunciationCubit cubit, int index) async {
+    await cubit.restore(_partFor(index));
+    if (cubit.state.isScored || cubit.state.isRecording || cubit.state.isAssessing) {
+      return;
+    }
+    final word = PhonicsWord.catalog[index];
+    await instance<CourseAudioCubit>().play(
+      AudioAssets.phonicsClip(word.wordKey.tr()),
+    );
   }
 
   AssessmentPartContext _partFor(int index) {

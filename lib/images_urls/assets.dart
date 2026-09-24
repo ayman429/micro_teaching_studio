@@ -64,6 +64,10 @@ class Assets {
       "assets/icons/session_target.svg";
   static const String assetsIconsSessionMic = "assets/icons/session_mic.svg";
   static const String assetsIconsAiTwin = "assets/icons/ai_twin.svg";
+  static const String assetsImagesAiTwinFull =
+      "assets/images/ai_twin_full.jpg";
+  static const String assetsImagesAiTwinHead =
+      "assets/images/ai_twin_head.jpg";
   static const String assetsIconsAbc = "assets/images/abc.png";
   static const String assetsIconsAi = "assets/images/ai.png";
   static const String assetsIconsModuleSpeaker =

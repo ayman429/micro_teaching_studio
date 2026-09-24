@@ -4,15 +4,14 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:micro_teaching_studio/app/app_functions.dart';
 import 'package:micro_teaching_studio/app/imports.dart';
+import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
-import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
@@ -31,6 +30,15 @@ class FluencyPage extends StatefulWidget {
 
 class _FluencyPageState extends State<FluencyPage> {
   int _selectedTab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_playInstructions());
+    });
+  }
 
   @override
   void dispose() {
@@ -69,12 +77,8 @@ class _FluencyPageState extends State<FluencyPage> {
           );
         },
         child: CourseScaffold(
-          voiceCode: CourseConstants.fluencyVoiceCode,
           title: AppStrings.fluencyEnglishTitle.tr(),
-          currentIndex: CourseConstants.fluencyStepIndex,
           bodyGradient: ColorManager.gradientFluencySurface,
-          onBack: () => CourseFlow.back(context),
-          onNext: () => CourseFlow.next(context),
           body: ListView(
             padding: EdgeInsets.fromLTRB(
               AppPadding.p16.w,
@@ -126,18 +130,31 @@ class _FluencyPageState extends State<FluencyPage> {
   }
 
   void _selectTab(int index) {
-    if (index != 1) {
-      unawaited(instance<CourseAudioCubit>().stop());
-    }
     setState(() => _selectedTab = index);
+    if (index == 1) {
+      unawaited(_playListenIfNeeded());
+      return;
+    }
+    unawaited(_playInstructions());
   }
 
   void _showPractice() {
     setState(() => _selectedTab = 1);
+    unawaited(_playListenIfNeeded());
   }
 
-  void _popIfPossible() {
-    if (context.canPop()) context.pop();
+  Future<void> _playInstructions() {
+    return instance<CourseAudioCubit>().playSequence(
+      AudioAssets.fluencyInstructionsSequence(),
+    );
+  }
+
+  Future<void> _playListenIfNeeded() async {
+    final cubit = instance<PronunciationCubit>();
+    if (cubit.state.isScored || cubit.state.isRecording || cubit.state.isAssessing) {
+      return;
+    }
+    await instance<CourseAudioCubit>().play(AudioAssets.fluencyParagraph());
   }
 }
 

@@ -6,7 +6,6 @@ import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/common/widgets/default_button_widget.dart';
-import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_svg_icon.dart';
@@ -20,13 +19,9 @@ class HelpPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CourseScaffold(
-      voiceCode: CourseConstants.helpVoiceCode,
       title: AppStrings.helpEnglishTitle.tr(),
-      currentIndex: CourseConstants.helpStepIndex,
       bodyGradient: ColorManager.gradientHelpSurface,
-      onBack: () => CourseFlow.back(context),
       onNext: () => CourseFlow.next(context),
-      backEnabled: CourseFlow.hasPrevious(context),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
           AppPadding.p16.w,
