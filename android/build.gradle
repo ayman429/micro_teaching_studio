@@ -18,12 +18,44 @@ allprojects {
 }
 
 
+// flutter_avif_android 3.1.0 ships FlutterAvifPlugin as both
+// src/main/java/.../FlutterAvifPlugin.java and src/main/kotlin/.../FlutterAvifPlugin.kt.
+// Kotlin joint compilation then fails with a redeclaration error. The registered
+// plugin class is the Kotlin one; AVIF decode itself goes through the native library.
+subprojects { subproject ->
+    subproject.afterEvaluate {
+        if (subproject.name != "flutter_avif_android") {
+            return
+        }
+        if (!subproject.plugins.hasPlugin("com.android.library")) {
+            return
+        }
+        def javaSources = subproject.android.sourceSets.main.java
+        def kept = javaSources.srcDirs.findAll { dir ->
+            def normalized = dir.absolutePath.replace("\\", "/")
+            !normalized.endsWith("/src/main/java")
+        }
+        javaSources.setSrcDirs(kept)
+    }
+}
+
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+// flutter_avif_android 3.1.0 ships FlutterAvifPlugin in both Java and Kotlin.
+// AGP 8.9+ compiles both and fails with a redeclaration error. Keep the Kotlin
+// class (the one pluginClass registers) and drop the duplicate Java sources.
+subprojects { subproject ->
+    if (subproject.name == 'flutter_avif_android') {
+        subproject.plugins.withId('com.android.library') {
+            subproject.android.sourceSets.main.java.srcDirs = ['src/main/kotlin']
+        }
+    }
 }
 
 tasks.register("clean", Delete) {
