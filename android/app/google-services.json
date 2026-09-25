@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "771195922447",
+    "project_id": "micro-teaching-studio",
+    "storage_bucket": "micro-teaching-studio.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:771195922447:android:25db46836ff34f781a9b7a",
+        "android_client_info": {
+          "package_name": "ayman.micro.teaching.studio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbWLxMqtcAY74Ozi_2w_cpTtwFD0zC4TY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:771195922447:android:f44f13d95e99f2aa1a9b7a",
+        "android_client_info": {
+          "package_name": "ayman.micro_teaching_studio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbWLxMqtcAY74Ozi_2w_cpTtwFD0zC4TY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

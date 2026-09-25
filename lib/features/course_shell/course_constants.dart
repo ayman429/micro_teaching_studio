@@ -1,0 +1,31 @@
+class CourseConstants {
+  static const int totalFrames = 12;
+  static const int openingStepIndex = 1;
+  static const String openingVoiceCode = '1-1';
+  static const int helpStepIndex = 1;
+  static const String helpVoiceCode = '2-1';
+  static const String helpVideoDuration = '2:14';
+  static const double helpVideoProgress = 0.333;
+  static const int loginStepIndex = 2;
+  static const String loginVoiceCode = '3-1';
+  static const int homeStepIndex = 3;
+  static const String homeVoiceCode = '4-1';
+  static const int aimsStepIndex = 4;
+  static const String aimsVoiceCode = '5-1';
+  static const int fluencyStepIndex = 5;
+  static const String fluencyVoiceCode = '6-1';
+  static const int phonicsStepIndex = 6;
+  static const String phonicsVoiceCode = '8-1';
+  static const int module2Session1StepIndex = 7;
+  static const String module2Session1VoiceCode = '10-1';
+  static const int module2Session2StepIndex = 8;
+  static const String module2Session2VoiceCode = '11-1';
+  static const int module3Session1StepIndex = 9;
+  static const String module3Session1VoiceCode = '16-1';
+  static const int module3Session2StepIndex = 10;
+  static const String module3Session2VoiceCode = '17-1';
+  static const int module3Session3StepIndex = 11;
+  static const String module3Session3VoiceCode = '18-1';
+  static const int moduleCount = 3;
+  static const int contentFrameCount = 25;
+}

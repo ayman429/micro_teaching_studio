@@ -1,0 +1,34 @@
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "africa-south1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    }
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "micro-teaching-studio",
+          "appId": "1:771195922447:android:25db46836ff34f781a9b7a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "micro-teaching-studio",
+          "configurations": {
+            "android": "1:771195922447:android:25db46836ff34f781a9b7a",
+            "ios": "1:771195922447:ios:7f4adc6b482cd4701a9b7a",
+            "web": "1:771195922447:web:aebf873856a05f4f1a9b7a"
+          }
+        }
+      }
+    }
+  }
+}
