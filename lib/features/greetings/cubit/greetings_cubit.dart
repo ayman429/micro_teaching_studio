@@ -270,9 +270,7 @@ class GreetingsCubit extends Cubit<GreetingsState> {
               : _Pending.retry);
       final feedbackKey = matched
           ? question.successKey
-          : (exhausted
-              ? _plan.exhaustedKey
-              : _plan.retryKey);
+          : (exhausted ? _plan.exhaustedKey : _plan.retryKey);
       final tone = matched
           ? GreetingsTone.correct
           : (exhausted ? GreetingsTone.exhausted : GreetingsTone.retry);
@@ -502,7 +500,14 @@ class GreetingsCubit extends Cubit<GreetingsState> {
       case _AudioCue.feedback:
         unawaited(_afterFeedback());
       case _AudioCue.reflection:
-        _requestExit();
+        if (!isClosed) {
+          emit(
+            state.copyWith(
+              phase: GreetingsPhase.done,
+              practiceEnabled: false,
+            ),
+          );
+        }
       case _AudioCue.none:
         break;
     }
@@ -550,8 +555,7 @@ class GreetingsCubit extends Cubit<GreetingsState> {
     if (!_analytics.isHydrated) await _analytics.hydrate();
     if (isClosed) return true;
     final snapshots = [
-      for (final question in _plan.questions)
-        _snapshot(question.partId),
+      for (final question in _plan.questions) _snapshot(question.partId),
     ];
     final index = GreetingsResumePlan.resumeIndex(snapshots);
     if (index < 0) return false;

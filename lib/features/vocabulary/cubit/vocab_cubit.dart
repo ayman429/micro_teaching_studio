@@ -269,9 +269,10 @@ class VocabCubit extends Cubit<GreetingsState> {
           : (turn.matches?.call(heard) ?? false);
       final attempts = state.attemptCount + 1;
       final exhausted = !matched && attempts >= turn.maxAttempts;
-      final lastQuestion = !_onWords &&
-          state.questionIndex >= VocabScript.questions.length - 1;
-      final lastWord = _onWords && state.questionIndex >= VocabScript.words.length - 1;
+      final lastQuestion =
+          !_onWords && state.questionIndex >= VocabScript.questions.length - 1;
+      final lastWord =
+          _onWords && state.questionIndex >= VocabScript.words.length - 1;
       _pending = matched
           ? (lastQuestion
               ? _Pending.reflect
@@ -299,7 +300,9 @@ class VocabCubit extends Cubit<GreetingsState> {
                         : AppStrings.greetingsFeedbackRetry),
                 tone: matched
                     ? GreetingsTone.correct
-                    : (exhausted ? GreetingsTone.exhausted : GreetingsTone.retry),
+                    : (exhausted
+                        ? GreetingsTone.exhausted
+                        : GreetingsTone.retry),
                 afterVideo: !_onWords,
               ),
           ],
@@ -532,7 +535,14 @@ class VocabCubit extends Cubit<GreetingsState> {
       case _Cue.feedback:
         unawaited(_afterFeedback());
       case _Cue.reflection:
-        _requestExit();
+        if (!isClosed) {
+          emit(
+            state.copyWith(
+              phase: GreetingsPhase.done,
+              practiceEnabled: false,
+            ),
+          );
+        }
       case _Cue.none:
         break;
     }
@@ -599,7 +609,8 @@ class VocabCubit extends Cubit<GreetingsState> {
     if (wordIndex < VocabScript.words.length) {
       _onWords = true;
       for (var cursor = 0; cursor < wordIndex; cursor++) {
-        messages.addAll(_savedTurns(VocabScript.words[cursor], afterVideo: false));
+        messages
+            .addAll(_savedTurns(VocabScript.words[cursor], afterVideo: false));
       }
       final turn = VocabScript.words[wordIndex];
       messages.addAll(_savedTurns(turn, afterVideo: false));
@@ -710,7 +721,8 @@ class VocabCubit extends Cubit<GreetingsState> {
     return count < 0 ? 0 : count;
   }
 
-  List<GreetingsMessage> _savedTurns(VocabTurn turn, {required bool afterVideo}) {
+  List<GreetingsMessage> _savedTurns(VocabTurn turn,
+      {required bool afterVideo}) {
     final messages = <GreetingsMessage>[
       _twin(turn.promptKey, afterVideo: afterVideo),
     ];
@@ -721,7 +733,8 @@ class VocabCubit extends Cubit<GreetingsState> {
       if (heard.isEmpty) continue;
       messages.add(_student(heard, afterVideo: afterVideo));
       if (outcome.isEmpty) continue;
-      if (turn.pronunciation && outcome == AnalyticsConstants.contentIncorrect) {
+      if (turn.pronunciation &&
+          outcome == AnalyticsConstants.contentIncorrect) {
         continue;
       }
       messages.add(

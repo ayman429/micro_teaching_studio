@@ -14,6 +14,7 @@ import 'package:micro_teaching_studio/features/greetings/cubit/greetings_cubit.d
 import 'package:micro_teaching_studio/features/greetings/greetings_page.dart';
 import 'package:micro_teaching_studio/features/quiz/cubit/quiz_cubit.dart';
 import 'package:micro_teaching_studio/features/quiz/widgets/quiz_card.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 
 class SessionOnePage extends StatelessWidget {
   const SessionOnePage({super.key});
@@ -46,6 +47,15 @@ class _SessionOneBodyState extends State<_SessionOneBody> {
   var _greetingsStarted = false;
   var _switching = false;
   var _routeCurrent = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _tab != 0) return;
+      unawaited(playSessionInstructions(2, 1));
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -94,9 +104,29 @@ class _SessionOneBodyState extends State<_SessionOneBody> {
   }
 
   Widget _panel() {
-    if (_tab == 1) return const GreetingsPage(embedded: true);
+    if (_tab == 1) {
+      return GreetingsPage(
+        embedded: true,
+        onContinue: () => unawaited(_selectTab(2)),
+      );
+    }
     if (_tab == 2) return const QuizCard();
-    return const SizedBox.expand();
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        AppPadding.p16.w,
+        AppPadding.p16.h,
+        AppPadding.p16.w,
+        AppPadding.p16.h,
+      ),
+      children: [
+        SessionInstructionsPanel(
+          module: 2,
+          session: 1,
+          sessionName: AppStrings.session1Greetings.tr(),
+          onStart: () => unawaited(_selectTab(1)),
+        ),
+      ],
+    );
   }
 
   Future<void> _selectTab(int index) async {
@@ -124,6 +154,9 @@ class _SessionOneBodyState extends State<_SessionOneBody> {
       }
       if (index == 2) {
         await quiz.onTabShown();
+      }
+      if (index == 0) {
+        await playSessionInstructions(2, 1);
       }
     } finally {
       _switching = false;

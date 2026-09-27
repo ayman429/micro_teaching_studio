@@ -643,29 +643,25 @@ class AnalyticsRepository {
       data: progressPayload,
       result: scored ? result : peekStoredState(part.partId).result,
     );
-    try {
-      await _commitOne(
-        _partProgress.doc(_partDocId(uid, part.partId)),
-        progressPayload,
-        merge: true,
-        label: 'part_progress',
-      );
-    } catch (_) {}
-    try {
-      await _commitOne(
-        _userProgress.doc(uid),
-        {
-          ..._identity(uid),
-          'lastAttemptAt': Timestamp.fromDate(endedAt),
-          'lastPartId': part.partId,
-          'lastBand': band,
-          'lastFeedbackLabel': FeedbackTier.labelOf(feedbackLevel),
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        merge: true,
-        label: 'user_progress',
-      );
-    } catch (_) {}
+    await _commitOne(
+      _partProgress.doc(_partDocId(uid, part.partId)),
+      progressPayload,
+      merge: true,
+      label: 'part_progress',
+    );
+    await _commitOne(
+      _userProgress.doc(uid),
+      {
+        ..._identity(uid),
+        'lastAttemptAt': Timestamp.fromDate(endedAt),
+        'lastPartId': part.partId,
+        'lastBand': band,
+        'lastFeedbackLabel': FeedbackTier.labelOf(feedbackLevel),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      merge: true,
+      label: 'user_progress',
+    );
 
     if (result != null) {
       try {

@@ -19,16 +19,18 @@ import 'package:micro_teaching_studio/features/course_video/widgets/course_video
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_cubit.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
 import 'package:micro_teaching_studio/features/greetings/widgets/greetings_bubble.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/lesson_continue_bar.dart';
 import 'package:micro_teaching_studio/features/greetings/widgets/greetings_practice_bar.dart';
 
 class GreetingsPage extends StatelessWidget {
-  const GreetingsPage({super.key, this.embedded = false});
+  const GreetingsPage({super.key, this.embedded = false, this.onContinue});
 
   final bool embedded;
+  final VoidCallback? onContinue;
 
   @override
   Widget build(BuildContext context) {
-    final body = _GreetingsBody(embedded: embedded);
+    final body = _GreetingsBody(embedded: embedded, onContinue: onContinue);
     if (embedded) return body;
     return BlocProvider(
       create: (_) => instance<GreetingsCubit>()..start(),
@@ -42,9 +44,10 @@ class GreetingsView extends GreetingsPage {
 }
 
 class _GreetingsBody extends StatefulWidget {
-  const _GreetingsBody({required this.embedded});
+  const _GreetingsBody({required this.embedded, this.onContinue});
 
   final bool embedded;
+  final VoidCallback? onContinue;
 
   @override
   State<_GreetingsBody> createState() => _GreetingsBodyState();
@@ -184,7 +187,10 @@ class _GreetingsBodyState extends State<_GreetingsBody> {
                   GreetingsPracticeBar(
                     state: state,
                     onPressed: () => context.read<GreetingsCubit>().toggleMic(),
-                  ),
+                  )
+                else if (state.phase == GreetingsPhase.done &&
+                    widget.onContinue != null)
+                  LessonContinueBar(onPressed: widget.onContinue!),
               ],
             );
           },

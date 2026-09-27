@@ -195,6 +195,7 @@ class _CourseVideoCardState extends State<_CourseVideoCard>
                             buildWhen: (previous, current) =>
                                 previous.isPlaying != current.isPlaying,
                             builder: (context, video) {
+                              if (video.isPlaying) return const SizedBox.shrink();
                               return Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -216,9 +217,7 @@ class _CourseVideoCardState extends State<_CourseVideoCard>
                                           ),
                                         ),
                                         child: CourseSvgIcon(
-                                          asset: video.isPlaying
-                                              ? Assets.assetsIconsHelpPause
-                                              : Assets.assetsIconsHelpPlay,
+                                          asset: Assets.assetsIconsHelpPlay,
                                           size: AppSize.s24.w,
                                         ),
                                       ),

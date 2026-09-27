@@ -2,8 +2,74 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write;
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isTeacher() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/roles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'teacher';
+    }
+
+    function ownsNew() {
+      return signedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
+    function ownsExisting() {
+      return signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.uid == userId;
+      allow delete: if false;
+    }
+
+    match /app_config/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /roles/{userId} {
+      allow get: if isOwner(userId);
+      allow list, write: if false;
+    }
+
+    match /user_progress/{userId} {
+      allow read: if isOwner(userId) || isTeacher();
+      allow create, update: if isOwner(userId) && ownsNew();
+      allow delete: if false;
+    }
+
+    match /part_progress/{docId} {
+      allow read: if ownsExisting() || isTeacher();
+      allow create: if ownsNew();
+      allow update: if ownsExisting() && ownsNew();
+      allow delete: if false;
+    }
+
+    match /attempts/{docId} {
+      allow read: if ownsExisting() || isTeacher();
+      allow create: if ownsNew();
+      allow update, delete: if false;
+    }
+
+    match /attempt_words/{docId} {
+      allow read: if ownsExisting() || isTeacher();
+      allow create: if ownsNew();
+      allow update, delete: if false;
+    }
+
+    match /attempt_phonemes/{docId} {
+      allow read: if ownsExisting() || isTeacher();
+      allow create: if ownsNew();
+      allow update, delete: if false;
     }
   }
 }

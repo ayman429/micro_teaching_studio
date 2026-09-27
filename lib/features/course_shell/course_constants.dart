@@ -26,6 +26,8 @@ class CourseConstants {
   static const String module3Session2VoiceCode = '17-1';
   static const int module3Session3StepIndex = 11;
   static const String module3Session3VoiceCode = '18-1';
+  static const int courseCompleteStepIndex = 12;
+  static const String courseCompleteVoiceCode = '25-1';
   static const int moduleCount = 3;
   static const int contentFrameCount = 25;
 }

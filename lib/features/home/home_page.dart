@@ -13,6 +13,7 @@ import 'package:micro_teaching_studio/common/resources/color_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
+import 'package:micro_teaching_studio/features/analytics/export/teacher_report_button.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_cubit.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_state.dart';
 import 'package:micro_teaching_studio/features/auth/models/student_avatar.dart';
@@ -46,94 +47,96 @@ class _HomePageState extends State<HomePage> {
           builder: (context, progressState) {
             final progress = progressState.snapshot;
             return CourseScaffold(
-          title: AppStrings.homeEnglishTitle.tr(),
-          closeAsset: Assets.assetsIconsLogout,
-          onClose: () => _confirmLogout(context),
-          showSkip: false,
-          body: Directionality(
-            textDirection: ui.TextDirection.ltr,
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(
-                AppPadding.p16.w,
-                AppPadding.p16.h,
-                AppPadding.p16.w,
-                AppPadding.p16.h,
-              ),
-              children: [
-                HomeProfileCard(
-                  fullName: state.user?.fullName ??
-                      instance<AppPreferences>().getFullName(),
-                  userName: state.user?.userName ??
-                      instance<AppPreferences>().getUserName(),
-                  avatar: state.user?.avatar ??
-                      StudentAvatar.fromName(
-                        instance<AppPreferences>().getUserImage(),
-                      ),
-                  overallProgress: progress.overallProgress,
-                ),
-                SizedBox(height: AppPadding.p16.h),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+              title: AppStrings.homeEnglishTitle.tr(),
+              closeAsset: Assets.assetsIconsLogout,
+              onClose: () => _confirmLogout(context),
+              showSkip: false,
+              body: Directionality(
+                textDirection: ui.TextDirection.ltr,
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    AppPadding.p16.w,
+                    AppPadding.p16.h,
+                    AppPadding.p16.w,
+                    AppPadding.p16.h,
+                  ),
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _openAims(context),
-                        child: Text(
-                          AppStrings.aimsOfTheProgram.tr(),
-                          style: getExtraBoldStyle(
-                            fontSize: FontSize.s18.sp,
-                            color: ColorManager.navy,
+                    HomeProfileCard(
+                      fullName: state.user?.fullName ??
+                          instance<AppPreferences>().getFullName(),
+                      userName: state.user?.userName ??
+                          instance<AppPreferences>().getUserName(),
+                      avatar: state.user?.avatar ??
+                          StudentAvatar.fromName(
+                            instance<AppPreferences>().getUserImage(),
                           ),
-                        ),
-                      ),
+                      overallProgress: progress.overallProgress,
                     ),
-                    Material(
-                      color: ColorManager.actionBlue,
-                      borderRadius: BorderRadius.circular(AppRadius.rCapsule.r),
-                      child: InkWell(
-                        onTap: () => _openAims(context),
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.rCapsule.r),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: AppPadding.p16.w,
-                            vertical: AppPadding.p8.h,
-                          ),
-                          child: Text(
-                            AppStrings.viewAimsAction.tr(),
-                            style: getBoldStyle(
-                              fontSize: FontSize.s14.sp,
-                              color: ColorManager.white,
+                    const TeacherReportButton(),
+                    SizedBox(height: AppPadding.p16.h),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _openAims(context),
+                            child: Text(
+                              AppStrings.aimsOfTheProgram.tr(),
+                              style: getExtraBoldStyle(
+                                fontSize: FontSize.s18.sp,
+                                color: ColorManager.navy,
+                              ),
                             ),
                           ),
                         ),
+                        Material(
+                          color: ColorManager.actionBlue,
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.rCapsule.r),
+                          child: InkWell(
+                            onTap: () => _openAims(context),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.rCapsule.r),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppPadding.p16.w,
+                                vertical: AppPadding.p8.h,
+                              ),
+                              child: Text(
+                                AppStrings.viewAimsAction.tr(),
+                                style: getBoldStyle(
+                                  fontSize: FontSize.s14.sp,
+                                  color: ColorManager.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: AppPadding.p24.h),
+                    Text(
+                      AppStrings.aimsOfTheProgramSubtitle.tr(),
+                      style: getBoldStyle(
+                        fontSize: FontSize.s12.sp,
+                        color: ColorManager.slate800,
                       ),
                     ),
+                    SizedBox(height: AppPadding.p8.h),
+                    ...HomeModule.catalog.map((module) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: AppPadding.p16.h),
+                        child: HomeModuleCard(
+                          module: module,
+                          progress: progress.moduleProgress(module.number),
+                          onSessionTap: (session) =>
+                              _openSession(context, module, session),
+                        ),
+                      );
+                    }),
                   ],
                 ),
-                SizedBox(height: AppPadding.p24.h),
-                Text(
-                  AppStrings.aimsOfTheProgramSubtitle.tr(),
-                  style: getBoldStyle(
-                    fontSize: FontSize.s12.sp,
-                    color: ColorManager.slate800,
-                  ),
-                ),
-                SizedBox(height: AppPadding.p8.h),
-                ...HomeModule.catalog.map((module) {
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: AppPadding.p16.h),
-                    child: HomeModuleCard(
-                      module: module,
-                      progress: progress.moduleProgress(module.number),
-                      onSessionTap: (session) =>
-                          _openSession(context, module, session),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
+              ),
             );
           },
         );

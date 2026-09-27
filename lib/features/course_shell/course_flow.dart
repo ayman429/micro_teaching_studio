@@ -26,35 +26,35 @@ class CourseStep {
 
 class CourseFlow {
   static final List<CourseStep> steps = [
-    CourseStep(
+    const CourseStep(
       route: AppRouters.openingView,
       index: CourseConstants.openingStepIndex,
       voiceCode: CourseConstants.openingVoiceCode,
     ),
-    CourseStep(
+    const CourseStep(
       route: AppRouters.loginView,
       index: CourseConstants.loginStepIndex,
       voiceCode: CourseConstants.loginVoiceCode,
       blocksNext: true,
     ),
-    CourseStep(
+    const CourseStep(
       route: AppRouters.homeView,
       index: CourseConstants.homeStepIndex,
       voiceCode: CourseConstants.homeVoiceCode,
     ),
-    CourseStep(
+    const CourseStep(
       route: AppRouters.aimsView,
       index: CourseConstants.aimsStepIndex,
       voiceCode: CourseConstants.aimsVoiceCode,
     ),
-    CourseStep(
+    const CourseStep(
       route: AppRouters.fluencyView,
       index: CourseConstants.fluencyStepIndex,
       voiceCode: CourseConstants.fluencyVoiceCode,
       module: 1,
       session: 1,
     ),
-    CourseStep(
+    const CourseStep(
       route: AppRouters.phonicsView,
       index: CourseConstants.phonicsStepIndex,
       voiceCode: CourseConstants.phonicsVoiceCode,
@@ -95,6 +95,11 @@ class CourseFlow {
       voiceCode: CourseConstants.module3Session3VoiceCode,
       module: 3,
       session: 3,
+    ),
+    const CourseStep(
+      route: AppRouters.courseCompleteView,
+      index: CourseConstants.courseCompleteStepIndex,
+      voiceCode: CourseConstants.courseCompleteVoiceCode,
     ),
   ];
 
@@ -161,8 +166,7 @@ class CourseFlow {
       return;
     }
     final location = GoRouterState.of(context).matchedLocation;
-    if (location == AppRouters.loginView ||
-        location == AppRouters.signInView) {
+    if (location == AppRouters.loginView || location == AppRouters.signInView) {
       context.go(AppRouters.openingView);
       return;
     }

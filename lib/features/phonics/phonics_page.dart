@@ -14,6 +14,8 @@ import 'package:micro_teaching_studio/features/analytics/models/assessment_part_
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_word.dart';
 import 'package:micro_teaching_studio/features/phonics/widgets/phonics_banner.dart';
 import 'package:micro_teaching_studio/features/phonics/widgets/phonics_word_card.dart';
@@ -30,6 +32,16 @@ class PhonicsPage extends StatefulWidget {
 
 class _PhonicsPageState extends State<PhonicsPage> {
   int _selectedIndex = 0;
+  int _tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _tab != 0) return;
+      unawaited(playSessionInstructions(1, 2));
+    });
+  }
 
   @override
   void dispose() {
@@ -45,7 +57,7 @@ class _PhonicsPageState extends State<PhonicsPage> {
         BlocProvider(
           create: (_) {
             final cubit = instance<PronunciationCubit>();
-            unawaited(_restoreAndListen(cubit, 0));
+            unawaited(cubit.restore(_partFor(0)));
             return cubit;
           },
         ),
@@ -62,66 +74,116 @@ class _PhonicsPageState extends State<PhonicsPage> {
             context,
           );
         },
-        child: CourseScaffold(
-          title: AppStrings.phonicsEnglishTitle.tr(),
-          bodyGradient: ColorManager.gradientFluencySurface,
-          body: ListView(
-            padding: EdgeInsets.fromLTRB(
-              AppPadding.p16.w,
-              AppPadding.p16.h,
-              AppPadding.p16.w,
-              AppPadding.p16.h,
-            ),
-            children: [
-              const PhonicsBanner(),
-              SizedBox(height: AppPadding.p16.h),
-              SizedBox(
-                height: AppSize.s40.h,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: PhonicsWord.catalog.length,
-                  separatorBuilder: (_, __) =>
-                      SizedBox(width: AppPadding.p8.w),
-                  itemBuilder: (context, index) {
-                    return PhonicsWordChip(
-                      word: PhonicsWord.catalog[index],
-                      isSelected: index == _selectedIndex,
-                      onTap: () {
-                        setState(() => _selectedIndex = index);
-                        unawaited(
-                          _restoreAndListen(
-                            context.read<PronunciationCubit>(),
-                            index,
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: AppPadding.p16.h),
-              Builder(
-                builder: (context) {
-                  return PhonicsWordCard(
-                    word: word,
-                    onSpeak: () {
-                      context.read<PronunciationCubit>().toggle(
-                            referenceText: word.wordKey.tr(),
-                            enableProsody: false,
-                            part: AssessmentPartContext.phonics(
-                              word: word,
-                              referenceText: word.wordKey.tr(),
-                              referenceIpa: word.ipaKey.tr(),
+        child: Builder(
+          builder: (context) {
+            return CourseScaffold(
+              title: AppStrings.phonicsEnglishTitle.tr(),
+              bodyGradient: ColorManager.gradientFluencySurface,
+              body: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppPadding.p16.w,
+                      AppPadding.p16.h,
+                      AppPadding.p16.w,
+                      0,
+                    ),
+                    child: CourseSegmentedTabs(
+                      labels: [
+                        AppStrings.instructionsTab.tr(),
+                        AppStrings.practiceTab.tr(),
+                      ],
+                      selectedIndex: _tab,
+                      onSelected: (index) => _selectTab(context, index),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.fromLTRB(
+                        AppPadding.p16.w,
+                        AppPadding.p16.h,
+                        AppPadding.p16.w,
+                        AppPadding.p16.h,
+                      ),
+                      children: [
+                        if (_tab == 0)
+                          SessionInstructionsPanel(
+                            module: 1,
+                            session: 2,
+                            sessionName: AppStrings.phonicsEnglishTitle.tr(),
+                            onStart: () => _selectTab(context, 1),
+                          )
+                        else ...[
+                          const PhonicsBanner(),
+                          SizedBox(height: AppPadding.p16.h),
+                          SizedBox(
+                            height: AppSize.s40.h,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: PhonicsWord.catalog.length,
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(width: AppPadding.p8.w),
+                              itemBuilder: (context, index) {
+                                return PhonicsWordChip(
+                                  word: PhonicsWord.catalog[index],
+                                  isSelected: index == _selectedIndex,
+                                  onTap: () {
+                                    setState(() => _selectedIndex = index);
+                                    unawaited(
+                                      _restoreAndListen(
+                                        context.read<PronunciationCubit>(),
+                                        index,
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                          );
-                    },
-                    onNext: () => _goNext(context),
-                  );
-                },
+                          ),
+                          SizedBox(height: AppPadding.p16.h),
+                          Builder(
+                            builder: (context) {
+                              return PhonicsWordCard(
+                                word: word,
+                                onSpeak: () {
+                                  context.read<PronunciationCubit>().toggle(
+                                        referenceText: word.wordKey.tr(),
+                                        enableProsody: false,
+                                        part: AssessmentPartContext.phonics(
+                                          word: word,
+                                          referenceText: word.wordKey.tr(),
+                                          referenceIpa: word.ipaKey.tr(),
+                                        ),
+                                      );
+                                },
+                                onNext: () => _goNext(context),
+                              );
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
+      ),
+    );
+  }
+
+  void _selectTab(BuildContext context, int index) {
+    if (index == _tab) return;
+    setState(() => _tab = index);
+    if (index == 0) {
+      unawaited(playSessionInstructions(1, 2));
+      return;
+    }
+    unawaited(
+      _restoreAndListen(
+        context.read<PronunciationCubit>(),
+        _selectedIndex,
       ),
     );
   }
@@ -142,7 +204,9 @@ class _PhonicsPageState extends State<PhonicsPage> {
 
   Future<void> _restoreAndListen(PronunciationCubit cubit, int index) async {
     await cubit.restore(_partFor(index));
-    if (cubit.state.isScored || cubit.state.isRecording || cubit.state.isAssessing) {
+    if (cubit.state.isScored ||
+        cubit.state.isRecording ||
+        cubit.state.isAssessing) {
       return;
     }
     final word = PhonicsWord.catalog[index];
@@ -159,7 +223,6 @@ class _PhonicsPageState extends State<PhonicsPage> {
       referenceIpa: word.ipaKey.tr(),
     );
   }
-
 }
 
 class PhonicsView extends PhonicsPage {

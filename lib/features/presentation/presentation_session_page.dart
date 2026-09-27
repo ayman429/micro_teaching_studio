@@ -10,6 +10,7 @@ import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/analytics/data/analytics_repository.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_cubit.dart';
@@ -20,6 +21,7 @@ import 'package:micro_teaching_studio/features/presentation/presentation_script.
 import 'package:micro_teaching_studio/features/presentation/widgets/presentation_quiz_card.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pronunciation_engine.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 
 class PresentationSessionPage extends StatelessWidget {
   const PresentationSessionPage({super.key});
@@ -70,6 +72,15 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
   var _routeCurrent = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _tab != 0) return;
+      unawaited(playSessionInstructions(3, 3));
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final current = ModalRoute.of(context)?.isCurrent ?? true;
@@ -116,9 +127,33 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
   }
 
   Widget _panel() {
-    if (_tab == 1) return const GreetingsPage(embedded: true);
-    if (_tab == 2) return const PresentationQuizCard();
-    return const SizedBox.expand();
+    if (_tab == 1) {
+      return GreetingsPage(
+        embedded: true,
+        onContinue: () => unawaited(_selectTab(2)),
+      );
+    }
+    if (_tab == 2) {
+      return PresentationQuizCard(
+        onCourseComplete: () => CourseFlow.next(context),
+      );
+    }
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        AppPadding.p16.w,
+        AppPadding.p16.h,
+        AppPadding.p16.w,
+        AppPadding.p16.h,
+      ),
+      children: [
+        SessionInstructionsPanel(
+          module: 3,
+          session: 3,
+          sessionName: AppStrings.sessionPresentContinuousPresentation.tr(),
+          onStart: () => unawaited(_selectTab(1)),
+        ),
+      ],
+    );
   }
 
   Future<void> _selectTab(int index) async {
@@ -141,6 +176,7 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
         }
       }
       if (index == 2) await quiz.onTabShown();
+      if (index == 0) await playSessionInstructions(3, 3);
     } finally {
       _switching = false;
     }

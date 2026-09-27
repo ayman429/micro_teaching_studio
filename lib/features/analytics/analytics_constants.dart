@@ -1,5 +1,7 @@
 class AnalyticsConstants {
   static const String userProgressCollection = 'user_progress';
+  static const String rolesCollection = 'roles';
+  static const String teacherRole = 'teacher';
   static const String partProgressCollection = 'part_progress';
   static const String attemptsCollection = 'attempts';
   static const String attemptWordsCollection = 'attempt_words';

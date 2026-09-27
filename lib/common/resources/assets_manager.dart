@@ -22,6 +22,36 @@ class AudioAssets {
         fluencyHowToApply(),
       ];
 
+  /// Module 3 files use a different filename case than modules 1 and 2.
+  static const _instructionAudioNames = <String, (String, String)>{
+    '3-1': ('Objectives.mp3', 'How to apply.mp3'),
+    '3-2': ('objectives.mp3', 'How to apply.mp3'),
+    '3-3': ('objectives.mp3', 'How to apply.mp3'),
+  };
+
+  static (String, String) _instructionAudioNamesFor(int module, int session) {
+    return _instructionAudioNames['$module-$session'] ??
+        ('objectives.mp3', 'how to apply.mp3');
+  }
+
+  static String sessionInstructionsText(int module, int session) =>
+      '${sessionFolder(module, session)}/instructions/text.txt';
+
+  static String sessionInstructionsObjectives(int module, int session) {
+    final names = _instructionAudioNamesFor(module, session);
+    return '${sessionFolder(module, session)}/instructions/${names.$1}';
+  }
+
+  static String sessionInstructionsHowToApply(int module, int session) {
+    final names = _instructionAudioNamesFor(module, session);
+    return '${sessionFolder(module, session)}/instructions/${names.$2}';
+  }
+
+  static List<String> sessionInstructionsSequence(int module, int session) => [
+        sessionInstructionsObjectives(module, session),
+        sessionInstructionsHowToApply(module, session),
+      ];
+
   static String phonicsClip(String word) =>
       file(1, 2, '${word.trim().toLowerCase()}.mp3');
 

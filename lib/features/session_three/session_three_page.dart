@@ -17,6 +17,7 @@ import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pro
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
 import 'package:micro_teaching_studio/features/vocabulary/cubit/vocab_cubit.dart';
 import 'package:micro_teaching_studio/features/vocabulary/cubit/vocab_quiz_cubit.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 import 'package:micro_teaching_studio/features/vocabulary/vocab_page.dart';
 import 'package:micro_teaching_studio/features/vocabulary/widgets/vocab_quiz_card.dart';
 
@@ -69,6 +70,15 @@ class _SessionThreeBodyState extends State<_SessionThreeBody> {
   var _routeCurrent = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _tab != 0) return;
+      unawaited(playSessionInstructions(3, 1));
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final current = ModalRoute.of(context)?.isCurrent ?? true;
@@ -115,9 +125,26 @@ class _SessionThreeBodyState extends State<_SessionThreeBody> {
   }
 
   Widget _panel() {
-    if (_tab == 1) return const VocabPage();
+    if (_tab == 1) {
+      return VocabPage(onContinue: () => unawaited(_selectTab(2)));
+    }
     if (_tab == 2) return const VocabQuizCard();
-    return const SizedBox.expand();
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        AppPadding.p16.w,
+        AppPadding.p16.h,
+        AppPadding.p16.w,
+        AppPadding.p16.h,
+      ),
+      children: [
+        SessionInstructionsPanel(
+          module: 3,
+          session: 1,
+          sessionName: AppStrings.sessionVocabPresentation.tr(),
+          onStart: () => unawaited(_selectTab(1)),
+        ),
+      ],
+    );
   }
 
   Future<void> _selectTab(int index) async {
@@ -140,6 +167,7 @@ class _SessionThreeBodyState extends State<_SessionThreeBody> {
         }
       }
       if (index == 2) await quiz.onTabShown();
+      if (index == 0) await playSessionInstructions(3, 1);
     } finally {
       _switching = false;
     }

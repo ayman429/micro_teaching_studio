@@ -92,6 +92,7 @@ dependencies:
 #  cloud_firestore: ^4.17.5
   # chat packages ============
   cloud_firestore: ^6.0.3
+  excel: ^4.0.6
   # firebase_storage: ^13.0.3
   firebase_storage:
   url_launcher: ^6.2.1
@@ -150,16 +151,22 @@ flutter:
     - assets/audio/module1/session1/paragraph.mp3
     - assets/audio/module1/session1/
     - assets/audio/module1/session2/
+    - assets/audio/module1/session2/instructions/
     - assets/audio/module2/session1/
     - assets/audio/module2/session1/Assessment/
+    - assets/audio/module2/session1/instructions/
     - assets/audio/module2/session2/
     - assets/audio/module2/session2/Assessment/
+    - assets/audio/module2/session2/instructions/
     - assets/audio/module3/session1/
     - assets/audio/module3/session1/Assessment/
+    - assets/audio/module3/session1/instructions/
     - assets/audio/module3/session2/
     - assets/audio/module3/session2/Assessment/
+    - assets/audio/module3/session2/instructions/
     - assets/audio/module3/session3/
     - assets/audio/module3/session3/Assessment/
+    - assets/audio/module3/session3/instructions/
     - assets/videos/
     - shorebird.yaml
 
@@ -222,16 +229,22 @@ flutter_assets:
     - assets/audio/
     - assets/audio/module1/session1/
     - assets/audio/module1/session2/
+    - assets/audio/module1/session2/instructions/
     - assets/audio/module2/session1/
     - assets/audio/module2/session1/Assessment/
+    - assets/audio/module2/session1/instructions/
     - assets/audio/module2/session2/
     - assets/audio/module2/session2/Assessment/
+    - assets/audio/module2/session2/instructions/
     - assets/audio/module3/session1/
     - assets/audio/module3/session1/Assessment/
+    - assets/audio/module3/session1/instructions/
     - assets/audio/module3/session2/
     - assets/audio/module3/session2/Assessment/
+    - assets/audio/module3/session2/instructions/
     - assets/audio/module3/session3/
     - assets/audio/module3/session3/Assessment/
+    - assets/audio/module3/session3/instructions/
     - assets/videos/
   output_path: lib/images_urls/
   filename: assets.dart

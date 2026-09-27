@@ -1,4 +1,5 @@
 import 'package:micro_teaching_studio/features/aims/aims_page.dart';
+import 'package:micro_teaching_studio/features/course_complete/course_complete_page.dart';
 import 'package:micro_teaching_studio/features/course_shell/upcoming_session_page.dart';
 import 'package:micro_teaching_studio/features/auth/login_page.dart';
 import 'package:micro_teaching_studio/features/auth/sign_in_page.dart';
@@ -128,6 +129,7 @@ abstract class AppRouters {
   //************** Pronunciation Assessment ***************/
   static const String pronunciationAssessmentView =
       '/pronunciationAssessmentView';
+  static const String courseCompleteView = '/courseCompleteView';
 
   static final GoRouter router = GoRouter(
     navigatorKey: navigatorKey,
@@ -197,6 +199,14 @@ abstract class AppRouters {
         pageBuilder: (context, state) {
           return const CupertinoPage(
             child: FluencyView(),
+          );
+        },
+      ),
+      GoRoute(
+        path: courseCompleteView,
+        pageBuilder: (context, state) {
+          return const CupertinoPage(
+            child: CourseCompleteView(),
           );
         },
       ),

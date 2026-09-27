@@ -18,11 +18,14 @@ import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_video/widgets/course_video_player.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
 import 'package:micro_teaching_studio/features/greetings/widgets/greetings_bubble.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/lesson_continue_bar.dart';
 import 'package:micro_teaching_studio/features/greetings/widgets/greetings_practice_bar.dart';
 import 'package:micro_teaching_studio/features/vocabulary/cubit/vocab_cubit.dart';
 
 class VocabPage extends StatefulWidget {
-  const VocabPage({super.key});
+  const VocabPage({super.key, this.onContinue});
+
+  final VoidCallback? onContinue;
 
   @override
   State<VocabPage> createState() => _VocabPageState();
@@ -122,8 +125,9 @@ class _VocabPageState extends State<VocabPage> {
                                   onPlaybackStarted: () {
                                     final cubit = context.read<VocabCubit>();
                                     final phase = cubit.state.phase;
-                                    final intro = phase == GreetingsPhase.intro ||
-                                        phase == GreetingsPhase.watching;
+                                    final intro =
+                                        phase == GreetingsPhase.intro ||
+                                            phase == GreetingsPhase.watching;
                                     if (!intro) {
                                       _videoHandle.pause();
                                       return;
@@ -148,7 +152,10 @@ class _VocabPageState extends State<VocabPage> {
                             state: state,
                             onPressed: () =>
                                 context.read<VocabCubit>().toggleMic(),
-                          ),
+                          )
+                        else if (state.phase == GreetingsPhase.done &&
+                            widget.onContinue != null)
+                          LessonContinueBar(onPressed: widget.onContinue!),
                       ],
                     );
                   },

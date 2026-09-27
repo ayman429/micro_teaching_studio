@@ -405,6 +405,11 @@ class AppStrings {
   static const String modulesStatLabel = "modulesStatLabel";
   static const String framesLabel = "framesLabel";
   static const String mainMenuAction = "mainMenuAction";
+  static const String courseCompleteTitle = "courseCompleteTitle";
+  static const String courseCompleteHeadline = "courseCompleteHeadline";
+  static const String courseCompleteMessage = "courseCompleteMessage";
+  static const String exportGrades = "exportGrades";
+  static const String exportGradesFailed = "exportGradesFailed";
   static const String moduleLabel = "moduleLabel";
   static const String percentLabel = "percentLabel";
   static const String module1Title = "module1Title";
@@ -455,6 +460,7 @@ class AppStrings {
   static const String howToApply = "howToApply";
   static const String fluencyHowToApplyBody = "fluencyHowToApplyBody";
   static const String startReadingPractice = "startReadingPractice";
+  static const String startSession = "startSession";
   static const String readThisText = "readThisText";
   static const String fluencyPracticePassage = "fluencyPracticePassage";
   static const String tapToSpeak = "tapToSpeak";

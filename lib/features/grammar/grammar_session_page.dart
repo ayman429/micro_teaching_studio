@@ -20,6 +20,7 @@ import 'package:micro_teaching_studio/features/greetings/greetings_page.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pronunciation_engine.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 
 class GrammarSessionPage extends StatelessWidget {
   const GrammarSessionPage({super.key});
@@ -69,6 +70,15 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
   var _routeCurrent = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _tab != 0) return;
+      unawaited(playSessionInstructions(3, 2));
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final current = ModalRoute.of(context)?.isCurrent ?? true;
@@ -115,9 +125,29 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
   }
 
   Widget _panel() {
-    if (_tab == 1) return const GreetingsPage(embedded: true);
+    if (_tab == 1) {
+      return GreetingsPage(
+        embedded: true,
+        onContinue: () => unawaited(_selectTab(2)),
+      );
+    }
     if (_tab == 2) return const GrammarQuizCard();
-    return const SizedBox.expand();
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        AppPadding.p16.w,
+        AppPadding.p16.h,
+        AppPadding.p16.w,
+        AppPadding.p16.h,
+      ),
+      children: [
+        SessionInstructionsPanel(
+          module: 3,
+          session: 2,
+          sessionName: AppStrings.sessionPresentContinuousWarmup.tr(),
+          onStart: () => unawaited(_selectTab(1)),
+        ),
+      ],
+    );
   }
 
   Future<void> _selectTab(int index) async {
@@ -140,6 +170,7 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
         }
       }
       if (index == 2) await quiz.onTabShown();
+      if (index == 0) await playSessionInstructions(3, 2);
     } finally {
       _switching = false;
     }

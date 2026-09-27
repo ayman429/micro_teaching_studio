@@ -251,6 +251,7 @@
   "howToApply": "HOW TO APPLY",
   "fluencyHowToApplyBody": "First, read the following text. Then, you will be introduced to your \"AI Twin.\" After that, reread the text several times until you reach an acceptable level of performance.",
   "startReadingPractice": "Start Reading Practice",
+  "startSession": "Start",
   "readThisText": "READ THIS TEXT",
   "fluencyPracticePassage": "Marwa wanted to improve her English fluency, so she joined an online course. At first, she felt anxious about speaking in front of strangers. However, after a few weeks, she became more confident. The teacher encouraged tolerance and reminded students that hesitation is normal. Marwa enjoyed listening to different points of view from her classmates. She even became motivated to join an English club at her university.",
   "tapToSpeak": "Tap to speak",
@@ -434,5 +435,10 @@
   "presentationQuizC": "This is not suitable, and the teacher should have followed different steps.",
   "presentationQuizCorrect": "Excellent! That's correct. Teaching grammar effectively requires more than copying examples. The teacher should use engaging activities and provide opportunities for students to practice and demonstrate their understanding.",
   "presentationQuizWrong": "Not quite. Think about whether simply copying examples is enough to help students understand and use the present continuous. Try again.",
-  "presentationQuizRetry": "Good try! Think about what else the teacher should do to make sure students understand and can use the present continuous. Try again."
+  "presentationQuizRetry": "Good try! Think about what else the teacher should do to make sure students understand and can use the present continuous. Try again.",
+  "courseCompleteTitle": "Course complete",
+  "courseCompleteHeadline": "Congratulations!",
+  "courseCompleteMessage": "You've completed the course!",
+  "exportGrades": "Export grades",
+  "exportGradesFailed": "Couldn't create the grades file."
 }
