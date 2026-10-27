@@ -134,6 +134,19 @@ class CourseSessions {
     return false;
   }
 
+  /// Spoken chat tasks only. Unopened quiz questions are not a miss yet.
+  static bool hasMissedSpokenTask(
+    Set<String> pointIds,
+    int module,
+    int session,
+  ) {
+    for (final id in taskIds(module, session)) {
+      if (id.contains('#')) continue;
+      if (!pointIds.contains(id)) return true;
+    }
+    return false;
+  }
+
   /// Part documents to unlock so a missed task can be attempted again.
   static List<String> missedPartIds(
     Set<String> pointIds,

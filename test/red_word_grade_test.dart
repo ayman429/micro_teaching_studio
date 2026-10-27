@@ -54,6 +54,27 @@ void main() {
     final missed = gradeRedWords(redWords: red, words: similar);
     expect(missed.matched, 1);
     expect(missed.grade, RedWordGrade.retry);
+
+    final soft = _spoken('Yes, students are making a lot of noise.');
+    final making = soft.indexWhere((word) => word.word == 'making');
+    soft[making] = const PronunciationWordScore(
+      word: 'making',
+      accuracy: 80,
+      errorType: 'None',
+    );
+    expect(
+      gradeRedWords(redWords: red, words: soft).grade,
+      RedWordGrade.excellent,
+    );
+    soft[making] = const PronunciationWordScore(
+      word: 'making',
+      accuracy: 79,
+      errorType: 'None',
+    );
+    expect(
+      gradeRedWords(redWords: red, words: soft).grade,
+      RedWordGrade.retry,
+    );
   });
 
   test('more than half of a longer answer still earns the point path', () {

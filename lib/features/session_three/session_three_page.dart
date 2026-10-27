@@ -185,7 +185,10 @@ class _SessionThreeBodyState extends State<_SessionThreeBody> {
 
   Widget _panel() {
     if (_tab == 1) {
-      return VocabPage(onContinue: () => unawaited(_selectTab(2)));
+      return VocabPage(
+        onContinue: () => unawaited(_selectTab(2)),
+        onRestudy: () => unawaited(widget.onRestudy()),
+      );
     }
     if (_tab == 2) {
       return VocabQuizCard(onRestudy: () => unawaited(widget.onRestudy()));
@@ -233,7 +236,6 @@ class _SessionThreeBodyState extends State<_SessionThreeBody> {
         }
       }
       if (index == 2) await quiz.onTabShown();
-      if (index == 0) _playInstructions();
     } finally {
       _switching = false;
     }

@@ -27,6 +27,15 @@ void main() {
     expect(CourseSessions.firstUnfinished(finished)?.key, '2-2');
   });
 
+  test('chat restudy ignores quiz questions that were not opened', () {
+    final passedChat = {'2-1-q1', '2-1-q2', '2-1-q3'};
+    expect(CourseSessions.hasMissedSpokenTask(passedChat, 2, 1), isFalse);
+    expect(CourseSessions.hasMissedTask(passedChat, 2, 1), isTrue);
+
+    final failedChat = {'2-1-q1'};
+    expect(CourseSessions.hasMissedSpokenTask(failedChat, 2, 1), isTrue);
+  });
+
   test('a missed quiz question reopens its part without clearing a point', () {
     final points = {'2-2-q1', '2-2-quiz#0'};
     expect(CourseSessions.hasMissedTask(points, 2, 2), isTrue);

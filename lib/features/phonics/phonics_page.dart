@@ -236,10 +236,7 @@ class _PhonicsPageState extends State<PhonicsPage> {
     if (index > 0 && !_instructionsReady) return;
     if (index == _tab) return;
     setState(() => _tab = index);
-    if (index == 0) {
-      _playInstructions();
-      return;
-    }
+    if (index == 0) return;
     unawaited(
       _restoreAndListen(
         context.read<PronunciationCubit>(),

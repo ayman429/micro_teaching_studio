@@ -1,7 +1,9 @@
 import 'package:micro_teaching_studio/features/pronunciation_assessment/models/pronunciation_result.dart';
-import 'package:micro_teaching_studio/features/pronunciation_assessment/pronunciation_constants.dart';
 
 enum RedWordGrade { excellent, needsImprovement, retry }
+
+/// Chat answers only. Other pronunciation tasks keep the app-wide 90 line.
+const double redWordAccuracyMin = 80;
 
 class RedWordVerdict {
   const RedWordVerdict({
@@ -98,7 +100,7 @@ int? _nextSpoken(List<PronunciationWordScore> words, int start) {
 bool _correct(PronunciationWordScore word) {
   if (word.isInsertion || word.isOmission) return false;
   if (word.errorType.toLowerCase() != 'none') return false;
-  return (word.accuracy ?? 0) >= PronunciationConstants.excellentMin;
+  return (word.accuracy ?? 0) >= redWordAccuracyMin;
 }
 
 bool _same(String want, PronunciationWordScore word) {

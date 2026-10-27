@@ -166,7 +166,10 @@ class _SessionOneBodyState extends State<_SessionOneBody> {
     if (_tab == 1) {
       return GreetingsPage(
         embedded: true,
+        module: 2,
+        session: 1,
         onContinue: () => unawaited(_selectTab(2)),
+        onRestudy: () => unawaited(widget.onRestudy()),
       );
     }
     if (_tab == 2) {
@@ -220,9 +223,6 @@ class _SessionOneBodyState extends State<_SessionOneBody> {
       }
       if (index == 2) {
         await quiz.onTabShown();
-      }
-      if (index == 0) {
-        _playInstructions();
       }
     } finally {
       _switching = false;

@@ -184,9 +184,7 @@ class _FluencyPageState extends State<FluencyPage> {
     setState(() => _selectedTab = index);
     if (index == 1) {
       unawaited(_playListenIfNeeded(context));
-      return;
     }
-    _playInstructions();
   }
 
   void _showPractice(BuildContext context) {

@@ -14,6 +14,7 @@ import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_cubit.dart';
 import 'package:micro_teaching_studio/features/auth/models/student_avatar.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/chat_lesson_end_bar.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_video/widgets/course_video_player.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_cubit.dart';
@@ -23,14 +24,30 @@ import 'package:micro_teaching_studio/features/course_shell/widgets/lesson_conti
 import 'package:micro_teaching_studio/features/greetings/widgets/greetings_practice_bar.dart';
 
 class GreetingsPage extends StatelessWidget {
-  const GreetingsPage({super.key, this.embedded = false, this.onContinue});
+  const GreetingsPage({
+    super.key,
+    this.embedded = false,
+    this.onContinue,
+    this.onRestudy,
+    this.module,
+    this.session,
+  });
 
   final bool embedded;
   final VoidCallback? onContinue;
+  final VoidCallback? onRestudy;
+  final int? module;
+  final int? session;
 
   @override
   Widget build(BuildContext context) {
-    final body = _GreetingsBody(embedded: embedded, onContinue: onContinue);
+    final body = _GreetingsBody(
+      embedded: embedded,
+      onContinue: onContinue,
+      onRestudy: onRestudy,
+      module: module,
+      session: session,
+    );
     if (embedded) return body;
     return BlocProvider(
       create: (_) => instance<GreetingsCubit>()..start(),
@@ -44,10 +61,19 @@ class GreetingsView extends GreetingsPage {
 }
 
 class _GreetingsBody extends StatefulWidget {
-  const _GreetingsBody({required this.embedded, this.onContinue});
+  const _GreetingsBody({
+    required this.embedded,
+    this.onContinue,
+    this.onRestudy,
+    this.module,
+    this.session,
+  });
 
   final bool embedded;
   final VoidCallback? onContinue;
+  final VoidCallback? onRestudy;
+  final int? module;
+  final int? session;
 
   @override
   State<_GreetingsBody> createState() => _GreetingsBodyState();
@@ -193,12 +219,27 @@ class _GreetingsBodyState extends State<_GreetingsBody> {
                   )
                 else if (state.phase == GreetingsPhase.done &&
                     widget.onContinue != null)
-                  LessonContinueBar(onPressed: widget.onContinue!),
+                  _endBar(),
               ],
             );
           },
         ),
       ),
+    );
+  }
+
+  Widget _endBar() {
+    final module = widget.module;
+    final session = widget.session;
+    final onRestudy = widget.onRestudy;
+    if (module == null || session == null || onRestudy == null) {
+      return LessonContinueBar(onPressed: widget.onContinue!);
+    }
+    return ChatLessonEndBar(
+      module: module,
+      session: session,
+      onContinue: widget.onContinue!,
+      onRestudy: onRestudy,
     );
   }
 
