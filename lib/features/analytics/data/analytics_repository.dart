@@ -47,6 +47,7 @@ class AnalyticsRepository {
   final Map<String, List<Map<String, dynamic>>> _attemptDocs = {};
   final Set<String> _completedIds = {};
   final Set<String> _taskPointIds = {};
+  final Map<String, int> _studyRounds = {};
 
   bool get isHydrated => _hydrated;
 
@@ -68,9 +69,24 @@ class AnalyticsRepository {
   List<Map<String, dynamic>> peekAttempts(String partId) {
     final attempts = _attemptDocs[partId];
     if (attempts == null) return const [];
+    final round = _currentStudyRound(partId);
     return [
-      for (final attempt in attempts) Map<String, dynamic>.from(attempt),
+      for (final attempt in attempts)
+        if (_studyRound(attempt) >= round) Map<String, dynamic>.from(attempt),
     ];
+  }
+
+  int _currentStudyRound(String partId) {
+    final fromPart =
+        _partDocs[partId] == null ? 1 : _studyRound(_partDocs[partId]!);
+    final saved = _studyRounds[partId] ?? 1;
+    final round = fromPart > saved ? fromPart : saved;
+    return round <= 0 ? 1 : round;
+  }
+
+  int _studyRound(Map<String, dynamic> data) {
+    final round = (data['studyRound'] as num?)?.toInt() ?? 1;
+    return round <= 0 ? 1 : round;
   }
 
   void resetCache() {
@@ -81,6 +97,7 @@ class AnalyticsRepository {
     _attemptDocs.clear();
     _completedIds.clear();
     _taskPointIds.clear();
+    _studyRounds.clear();
   }
 
   Future<void> hydrate() {
@@ -184,6 +201,16 @@ class AnalyticsRepository {
           _taskPointIds
             ..clear()
             ..addAll(raw.map((item) => item.toString()));
+        }
+        final rounds = user.data()?['studyRounds'];
+        if (rounds is Map) {
+          _studyRounds
+            ..clear()
+            ..addAll({
+              for (final entry in rounds.entries)
+                entry.key.toString():
+                    entry.value is num ? entry.value.toInt() : 1,
+            });
         }
       } catch (error, stack) {
         log('analytics task points: $error', stackTrace: stack);
@@ -472,6 +499,7 @@ class AnalyticsRepository {
       'lessonFeedback': '',
       'heardText': '',
       'resumeReached': true,
+      'studyRound': _currentStudyRound(part.partId),
       'updatedAt': FieldValue.serverTimestamp(),
     };
     await _commitOne(
@@ -524,6 +552,45 @@ class AnalyticsRepository {
       },
       merge: true,
       label: 'task points',
+    );
+  }
+
+  Future<void> archiveLessonAnswers(
+    Iterable<String> partIds, {
+    Iterable<String> clearStatementsFor = const [],
+  }) async {
+    await hydrate();
+    final uid = _uid;
+    final clear = clearStatementsFor.toSet();
+    for (final partId in partIds.toSet()) {
+      if (partId.isEmpty) continue;
+      final existing = _partDocs[partId];
+      final nextRound = _currentStudyRound(partId) + 1;
+      _studyRounds[partId] = nextRound;
+      if (existing == null) continue;
+      existing['studyRound'] = nextRound;
+      if (clear.contains(partId)) existing['statements'] = <dynamic>[];
+      if (uid.isEmpty) continue;
+      await _commitOne(
+        _partProgress.doc(_partDocId(uid, partId)),
+        {
+          'studyRound': nextRound,
+          if (clear.contains(partId)) 'statements': <dynamic>[],
+        },
+        merge: true,
+        label: 'archive part',
+      );
+    }
+    if (uid.isEmpty) return;
+    await _commitOne(
+      _userProgress.doc(uid),
+      {
+        ..._identity(uid),
+        'studyRounds': _studyRounds,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      merge: true,
+      label: 'study rounds',
     );
   }
 
@@ -633,6 +700,7 @@ class AnalyticsRepository {
     final lists = _WordLists.from(result);
     final counts = _WordCounts.from(result);
     final previous = await _readPartProgress(uid, part.partId);
+    final studyRound = _currentStudyRound(part.partId);
     final progressPayload = _partProgressPayload(
       uid: uid,
       part: part,
@@ -653,6 +721,7 @@ class AnalyticsRepository {
         {
           ..._placement(uid, part),
           'attemptId': attemptId,
+          'studyRound': studyRound,
           'referenceText': _clip(part.referenceText, 8000),
           'referenceIpa': _clip(part.referenceIpa ?? '', 400),
           'attemptNumber': attemptNumber,
@@ -700,7 +769,9 @@ class AnalyticsRepository {
         },
         label: 'attempt');
     _attemptDocs.putIfAbsent(part.partId, () => []).add({
+      'attemptId': attemptId,
       'partId': part.partId,
+      'studyRound': studyRound,
       'attemptNumber': attemptNumber,
       'heardText': result?.heardText ?? '',
       if (lesson != null) 'contentOutcome': lesson.contentOutcome,
@@ -856,6 +927,7 @@ class AnalyticsRepository {
       'latestFeedbackLabel': feedbackLabel,
       'attemptCount': nextAttemptCount,
       'maxAttempts': maxAttempts,
+      'studyRound': _currentStudyRound(part.partId),
       if (!keepAttempt) 'latestAttemptId': attemptId,
       if (!keepAttempt) 'latestBand': band,
       if (!keepAttempt) 'latestPronScore': pronScore,

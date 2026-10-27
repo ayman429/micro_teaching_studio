@@ -108,6 +108,7 @@ void main() {
           'partId': CourseProgressIds.fluencyPassage,
           'partLabel': 'passage',
           'attemptNumber': 1,
+          'studyRound': 2,
           'heardText': 'Marwa',
           'pronScore': 96,
           'band': AnalyticsConstants.bandExcellent,
@@ -119,6 +120,7 @@ void main() {
       ],
     );
 
+    expect(report.attempts.single.studyRoundLabel, 'Restudy');
     expect(report.students.single.aimsAchieved, 1);
     expect(report.students.single.taskPoints, 1);
     expect(report.students.single.performance.pronunciationAverage, 96);

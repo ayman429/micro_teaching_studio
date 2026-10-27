@@ -67,9 +67,7 @@ class CourseSessions {
         CourseProgressIds.classroomNoise,
         CourseProgressIds.classroomResponse,
         CourseProgressIds.classroomExpressions,
-        for (var index = 0;
-            index < ClassroomScript.quizItems.length;
-            index++)
+        for (var index = 0; index < ClassroomScript.quizItems.length; index++)
           quizTask(CourseProgressIds.classroomQuiz, index),
       ];
     }
@@ -145,6 +143,16 @@ class CourseSessions {
       if (!pointIds.contains(id)) return true;
     }
     return false;
+  }
+
+  static List<String> partIds(int module, int session) {
+    final parts = <String>[];
+    for (final id in taskIds(module, session)) {
+      final part = id.split('#').first;
+      if (part.isEmpty || parts.contains(part)) continue;
+      parts.add(part);
+    }
+    return parts;
   }
 
   /// Part documents to unlock so a missed task can be attempted again.

@@ -167,8 +167,12 @@ class CourseVideoCubit extends Cubit<CourseVideoState> {
       return;
     }
 
-    final ended = duration.inMilliseconds > 0 &&
-        position.inMilliseconds >= duration.inMilliseconds - 80;
+    final totalMs = duration.inMilliseconds;
+    final posMs = position.inMilliseconds;
+    final ended = totalMs > 0 &&
+        posMs > 0 &&
+        (totalMs - posMs <= 500 ||
+            (!value.isPlaying && totalMs - posMs <= 1200));
     if (ended) {
       unawaited(_onCompleted());
       return;
@@ -199,6 +203,7 @@ class CourseVideoCubit extends Cubit<CourseVideoState> {
           progress: 0,
           position: Duration.zero,
           completed: true,
+          completions: state.completions + 1,
           playsUsed: playsUsed,
         ),
       );

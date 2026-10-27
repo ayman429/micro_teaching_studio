@@ -207,9 +207,17 @@ class CourseFlow {
     final progress = context.read<CourseProgressCubit>();
     await progress.markRestudied(module, session);
     progress.clearChatOpened(module, session);
-    await instance<AnalyticsRepository>().reopenParts(
-      CourseSessions.missedPartIds(progress.state.pointIds, module, session),
+    final analytics = instance<AnalyticsRepository>();
+    final missed = CourseSessions.missedPartIds(
+      progress.state.pointIds,
+      module,
+      session,
     );
+    await analytics.archiveLessonAnswers(
+      CourseSessions.partIds(module, session),
+      clearStatementsFor: missed,
+    );
+    await analytics.reopenParts(missed);
     if (videoAsset != null && videoAsset.isNotEmpty) {
       CourseVideoPlays.reset(videoAsset);
     }

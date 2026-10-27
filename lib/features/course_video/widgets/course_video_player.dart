@@ -129,7 +129,7 @@ class _CourseVideoCardState extends State<_CourseVideoCard>
       },
       child: BlocListener<CourseVideoCubit, CourseVideoState>(
         listenWhen: (previous, current) =>
-            !previous.completed && current.completed,
+            previous.completions != current.completions,
         listener: (context, state) => widget.onCompleted?.call(),
         child: BlocListener<CourseVideoCubit, CourseVideoState>(
           listenWhen: (previous, current) =>

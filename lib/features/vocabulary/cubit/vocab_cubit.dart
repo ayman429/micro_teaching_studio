@@ -94,7 +94,11 @@ class VocabCubit extends Cubit<GreetingsState> {
   }
 
   Future<void> onVideoCompleted() async {
-    if (_videoFinished) return;
+    if (_videoFinished || _questionsStarted || isClosed) return;
+    if (state.phase != GreetingsPhase.intro &&
+        state.phase != GreetingsPhase.watching) {
+      return;
+    }
     _videoFinished = true;
     _cue = _Cue.none;
     _heardPlayback = false;
@@ -274,7 +278,7 @@ class VocabCubit extends Cubit<GreetingsState> {
           language: config.language,
           region: config.region,
         );
-        _requestExit();
+        await _holdForAnotherTry();
         return;
       }
       final heard = result.heardText!.trim();
@@ -364,7 +368,7 @@ class VocabCubit extends Cubit<GreetingsState> {
           language: PronunciationConstants.defaultLanguage,
           region: PronunciationConstants.defaultRegion,
         );
-        _requestExit();
+        await _holdForAnotherTry();
         return;
       }
       _emitError(error);
@@ -576,6 +580,27 @@ class VocabCubit extends Cubit<GreetingsState> {
       case _Cue.none:
         break;
     }
+  }
+
+  Future<void> _holdForAnotherTry() async {
+    _pending = _Pending.retry;
+    if (!isClosed) {
+      emit(
+        state.copyWith(
+          phase: GreetingsPhase.feedback,
+          practiceEnabled: false,
+          messages: [
+            ...state.messages,
+            _twin(
+              AppStrings.greetingsFeedbackRetry,
+              tone: GreetingsTone.retry,
+              afterVideo: !_onWords,
+            ),
+          ],
+        ),
+      );
+    }
+    await _play(AudioAssets.vocabTryAgain(), _Cue.feedback);
   }
 
   void _requestExit() {

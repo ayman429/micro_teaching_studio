@@ -13,6 +13,7 @@ class AttemptRow {
     required this.partId,
     required this.partLabel,
     required this.attemptNumber,
+    required this.studyRound,
     required this.heardText,
     required this.pronScore,
     required this.accuracyScore,
@@ -34,6 +35,7 @@ class AttemptRow {
   final String partId;
   final String partLabel;
   final int attemptNumber;
+  final int studyRound;
   final String heardText;
   final double? pronScore;
   final double? accuracyScore;
@@ -45,6 +47,8 @@ class AttemptRow {
   final String lessonFeedback;
   final String startedAt;
   final String endedAt;
+
+  String get studyRoundLabel => studyRound <= 1 ? 'First study' : 'Restudy';
 }
 
 class StudentReport {
@@ -159,6 +163,8 @@ class CourseReport {
           partId: _text(doc['partId']),
           partLabel: _text(doc['partLabel']),
           attemptNumber: _int(doc['attemptNumber']),
+          studyRound:
+              _int(doc['studyRound']) <= 0 ? 1 : _int(doc['studyRound']),
           heardText: _text(doc['heardText']),
           pronScore: _double(doc['pronScore']),
           accuracyScore: _double(doc['accuracyScore']),
@@ -178,6 +184,8 @@ class CourseReport {
       if (byName != 0) return byName;
       final byPart = left.partId.compareTo(right.partId);
       if (byPart != 0) return byPart;
+      final byRound = left.studyRound.compareTo(right.studyRound);
+      if (byRound != 0) return byRound;
       return left.attemptNumber.compareTo(right.attemptNumber);
     });
     final students = [

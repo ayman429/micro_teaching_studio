@@ -139,12 +139,12 @@ class GreetingsCubit extends Cubit<GreetingsState> {
   }
 
   Future<void> onVideoCompleted() async {
-    if (_videoFinished) return;
-    _videoFinished = true;
+    if (_videoFinished || _questionsStarted || isClosed) return;
     if (state.phase != GreetingsPhase.intro &&
         state.phase != GreetingsPhase.watching) {
       return;
     }
+    _videoFinished = true;
     await _beginQuestions();
   }
 
@@ -278,7 +278,7 @@ class GreetingsCubit extends Cubit<GreetingsState> {
           language: config.language,
           region: config.region,
         );
-        _requestExit();
+        await _holdForAnotherTry();
         return;
       }
       final heard = result.heardText!.trim();
@@ -352,7 +352,7 @@ class GreetingsCubit extends Cubit<GreetingsState> {
           language: PronunciationConstants.defaultLanguage,
           region: PronunciationConstants.defaultRegion,
         );
-        _requestExit();
+        await _holdForAnotherTry();
         return;
       }
       try {
@@ -547,6 +547,23 @@ class GreetingsCubit extends Cubit<GreetingsState> {
       case _AudioCue.none:
         break;
     }
+  }
+
+  Future<void> _holdForAnotherTry() async {
+    _pending = _Pending.retry;
+    if (!isClosed) {
+      emit(
+        state.copyWith(
+          phase: GreetingsPhase.feedback,
+          practiceEnabled: false,
+          messages: [
+            ...state.messages,
+            _twin(_plan.retryKey, tone: GreetingsTone.retry, afterVideo: true),
+          ],
+        ),
+      );
+    }
+    await _playCue(_plan.retryAsset, _AudioCue.feedback);
   }
 
   void _requestExit() {
