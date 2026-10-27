@@ -22,6 +22,7 @@ class CourseProgressCubit extends Cubit<CourseProgressState> {
         completedIds: _store.load(),
         finishedSessions: _store.loadNamed('finished'),
         restudiedSessions: _store.loadNamed('restudy'),
+        openedChats: _store.loadNamed('chat'),
         pointIds: _store.loadNamed('points'),
       ),
     );
@@ -58,6 +59,26 @@ class CourseProgressCubit extends Cubit<CourseProgressState> {
     final next = {...state.restudiedSessions, key};
     emit(state.copyWith(restudiedSessions: next));
     await _store.saveNamed('restudy', next);
+  }
+
+  bool chatOpened(int module, int session) {
+    return state.openedChats.contains('$module-$session');
+  }
+
+  void markChatOpened(int module, int session) {
+    final key = '$module-$session';
+    if (state.openedChats.contains(key)) return;
+    final next = {...state.openedChats, key};
+    emit(state.copyWith(openedChats: next));
+    unawaited(_store.saveNamed('chat', next));
+  }
+
+  void clearChatOpened(int module, int session) {
+    final key = '$module-$session';
+    if (!state.openedChats.contains(key)) return;
+    final next = {...state.openedChats}..remove(key);
+    emit(state.copyWith(openedChats: next));
+    unawaited(_store.saveNamed('chat', next));
   }
 
   Future<void> awardPoint(String id) async {

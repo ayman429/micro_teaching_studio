@@ -6,12 +6,14 @@ class CourseProgressState extends Equatable {
     this.completedIds = const {},
     this.finishedSessions = const {},
     this.restudiedSessions = const {},
+    this.openedChats = const {},
     this.pointIds = const {},
   });
 
   final Set<String> completedIds;
   final Set<String> finishedSessions;
   final Set<String> restudiedSessions;
+  final Set<String> openedChats;
   final Set<String> pointIds;
 
   CourseProgressSnapshot get snapshot =>
@@ -21,12 +23,14 @@ class CourseProgressState extends Equatable {
     Set<String>? completedIds,
     Set<String>? finishedSessions,
     Set<String>? restudiedSessions,
+    Set<String>? openedChats,
     Set<String>? pointIds,
   }) {
     return CourseProgressState(
       completedIds: completedIds ?? this.completedIds,
       finishedSessions: finishedSessions ?? this.finishedSessions,
       restudiedSessions: restudiedSessions ?? this.restudiedSessions,
+      openedChats: openedChats ?? this.openedChats,
       pointIds: pointIds ?? this.pointIds,
     );
   }
@@ -36,6 +40,7 @@ class CourseProgressState extends Equatable {
         completedIds,
         finishedSessions,
         restudiedSessions,
+        openedChats,
         pointIds,
       ];
 }

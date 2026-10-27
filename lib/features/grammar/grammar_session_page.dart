@@ -13,6 +13,7 @@ import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_c
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/session_score_line.dart';
 import 'package:micro_teaching_studio/features/grammar/grammar_script.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
@@ -115,7 +116,13 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _tab != 0) return;
+      if (!mounted) return;
+      if (context.read<CourseProgressCubit>().chatOpened(3, 2)) {
+        _instructionsReady = true;
+        unawaited(_selectTab(1));
+        return;
+      }
+      if (_tab != 0) return;
       _playInstructions();
     });
   }
@@ -230,6 +237,7 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
       if (previous == 2) await quiz.onTabHidden();
       if (!mounted || _tab != index) return;
       if (index == 1) {
+        context.read<CourseProgressCubit>().markChatOpened(3, 2);
         if (!_lessonStarted) {
           _lessonStarted = true;
           await lesson.start();

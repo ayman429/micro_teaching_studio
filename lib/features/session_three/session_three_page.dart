@@ -12,6 +12,7 @@ import 'package:micro_teaching_studio/features/analytics/data/analytics_reposito
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/session_score_line.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
@@ -102,7 +103,13 @@ class _SessionThreeBodyState extends State<_SessionThreeBody> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _tab != 0) return;
+      if (!mounted) return;
+      if (context.read<CourseProgressCubit>().chatOpened(3, 1)) {
+        _instructionsReady = true;
+        unawaited(_selectTab(1));
+        return;
+      }
+      if (_tab != 0) return;
       _playInstructions();
     });
   }
@@ -228,6 +235,7 @@ class _SessionThreeBodyState extends State<_SessionThreeBody> {
       if (previous == 2) await quiz.onTabHidden();
       if (!mounted || _tab != index) return;
       if (index == 1) {
+        context.read<CourseProgressCubit>().markChatOpened(3, 1);
         if (!_lessonStarted) {
           _lessonStarted = true;
           await lesson.start();

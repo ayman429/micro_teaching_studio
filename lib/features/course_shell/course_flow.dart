@@ -206,6 +206,7 @@ class CourseFlow {
   }) async {
     final progress = context.read<CourseProgressCubit>();
     await progress.markRestudied(module, session);
+    progress.clearChatOpened(module, session);
     await instance<AnalyticsRepository>().reopenParts(
       CourseSessions.missedPartIds(progress.state.pointIds, module, session),
     );
