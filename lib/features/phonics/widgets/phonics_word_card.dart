@@ -23,12 +23,12 @@ class PhonicsWordCard extends StatelessWidget {
     super.key,
     required this.word,
     required this.onSpeak,
-    required this.onNext,
+    this.onNext,
   });
 
   final PhonicsWord word;
   final VoidCallback onSpeak;
-  final VoidCallback onNext;
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {

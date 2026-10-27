@@ -31,6 +31,7 @@ class CourseReportWorkbook {
       TextCellValue('Quiz accuracy %'),
       TextCellValue('Performance %'),
       TextCellValue('Aims achieved'),
+      TextCellValue('Task points'),
     ]);
     for (final student in report.students) {
       sheet.appendRow([
@@ -41,6 +42,7 @@ class CourseReportWorkbook {
         _number(student.performance.quizAccuracy),
         _number(student.performance.performancePercent),
         IntCellValue(student.aimsAchieved),
+        IntCellValue(student.taskPoints),
       ]);
     }
   }

@@ -10,6 +10,7 @@ import 'package:micro_teaching_studio/features/analytics/models/assessment_part_
 import 'package:micro_teaching_studio/features/analytics/models/lesson_analytics.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
 import 'package:micro_teaching_studio/features/home/models/course_progress.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pronunciation_engine.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
@@ -221,6 +222,11 @@ class VocabQuizCubit extends Cubit<VocabQuizState> {
         endedAt: DateTime.now(),
         language: PronunciationConstants.defaultLanguage,
         region: PronunciationConstants.defaultRegion,
+      );
+      await CourseSessions.awardMatches(
+        _progress,
+        CourseProgressIds.vocabQuiz,
+        _statements(graded: true),
       );
       if (matched || last) {
         await _progress.completePart(CourseProgressIds.vocabQuiz);

@@ -11,8 +11,10 @@ import 'package:micro_teaching_studio/features/analytics/data/analytics_reposito
 import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
 import 'package:micro_teaching_studio/features/analytics/models/lesson_analytics.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_state.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
+import 'package:micro_teaching_studio/features/greetings/red_word_grade.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pronunciation_engine.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
@@ -32,6 +34,12 @@ class VocabCubit extends Cubit<GreetingsState> {
     this._progress,
     this._audio,
   ) : super(const GreetingsState());
+
+  /// Later full plays are for review and must not skip the current prompt.
+  bool get canReplayVideo =>
+      _videoFinished &&
+      _cue == _Cue.none &&
+      state.phase != GreetingsPhase.recording;
 
   final SpeechConfigRepository _configRepository;
   final PronunciationEngine _engine;
@@ -59,6 +67,12 @@ class VocabCubit extends Cubit<GreetingsState> {
     if (_started) return;
     _started = true;
     _audioSub = _audio.stream.listen(_onAudio);
+    if (LessonReplay.consume(CourseSessions.key(3, 1))) {
+      _videoFinished = false;
+      if (isClosed) return;
+      await _askWord(0, playPrompt: true);
+      return;
+    }
     try {
       if (await _restore()) return;
     } catch (error, stack) {
@@ -264,16 +278,20 @@ class VocabCubit extends Cubit<GreetingsState> {
         return;
       }
       final heard = result.heardText!.trim();
-      final matched = turn.pronunciation
+      final verdict = turn.pronunciation
+          ? null
+          : gradeRedWords(redWords: turn.redWords, words: result.words);
+      final accepted = turn.pronunciation
           ? result.band == PronunciationBand.excellent
-          : (turn.matches?.call(heard) ?? false);
+          : verdict!.accepted;
+      final improve = verdict?.grade == RedWordGrade.needsImprovement;
       final attempts = state.attemptCount + 1;
-      final exhausted = !matched && attempts >= turn.maxAttempts;
+      final exhausted = !accepted && attempts >= turn.maxAttempts;
       final lastQuestion =
           !_onWords && state.questionIndex >= VocabScript.questions.length - 1;
       final lastWord =
           _onWords && state.questionIndex >= VocabScript.words.length - 1;
-      _pending = matched
+      _pending = accepted
           ? (lastQuestion
               ? _Pending.reflect
               : (lastWord ? _Pending.bridge : _Pending.advance))
@@ -282,7 +300,17 @@ class VocabCubit extends Cubit<GreetingsState> {
                   ? _Pending.finish
                   : (lastWord ? _Pending.bridge : _Pending.advance))
               : _Pending.retry);
-      final showText = matched || !turn.pronunciation || !exhausted;
+      final showText = accepted || !turn.pronunciation || !exhausted;
+      final feedbackKey = accepted
+          ? (improve
+              ? AppStrings.resultNeedsImprovement
+              : turn.successKey)
+          : (exhausted
+              ? AppStrings.greetingsFeedbackExhausted
+              : AppStrings.greetingsFeedbackRetry);
+      final tone = accepted
+          ? (improve ? GreetingsTone.improve : GreetingsTone.correct)
+          : (exhausted ? GreetingsTone.exhausted : GreetingsTone.retry);
       emit(
         state.copyWith(
           phase: GreetingsPhase.feedback,
@@ -293,16 +321,8 @@ class VocabCubit extends Cubit<GreetingsState> {
             _student(heard, afterVideo: !_onWords),
             if (showText)
               _twin(
-                matched
-                    ? turn.successKey
-                    : (exhausted
-                        ? AppStrings.greetingsFeedbackExhausted
-                        : AppStrings.greetingsFeedbackRetry),
-                tone: matched
-                    ? GreetingsTone.correct
-                    : (exhausted
-                        ? GreetingsTone.exhausted
-                        : GreetingsTone.retry),
+                feedbackKey,
+                tone: tone,
                 afterVideo: !_onWords,
               ),
           ],
@@ -313,19 +333,23 @@ class VocabCubit extends Cubit<GreetingsState> {
           turn: turn,
           result: result,
           attemptNumber: attempts,
-          matched: matched,
+          matched: accepted,
+          improve: improve,
           exhausted: exhausted,
           startedAt: startedAt,
           language: config.language,
           region: config.region,
         ),
       );
-      if (matched || exhausted) {
+      if (accepted) {
+        unawaited(_progress.awardPoint(turn.partId));
+      }
+      if (accepted || exhausted) {
         unawaited(_progress.completePart(turn.partId));
       }
       await _play(
-        matched
-            ? turn.successAsset
+        accepted
+            ? (improve ? AudioAssets.needsImprovement() : turn.successAsset)
             : (exhausted
                 ? AudioAssets.vocabIncorrect()
                 : AudioAssets.vocabTryAgain()),
@@ -374,16 +398,26 @@ class VocabCubit extends Cubit<GreetingsState> {
     required PronunciationResult result,
     required int attemptNumber,
     required bool matched,
+    required bool improve,
     required bool exhausted,
     required DateTime startedAt,
     required String language,
     required String region,
   }) async {
-    final feedback = matched
-        ? turn.successText
-        : (exhausted
-            ? (turn.pronunciation ? 'Incorrect' : VocabScript.exhaustedText)
-            : VocabScript.retryText);
+    final feedback = improve
+        ? 'Needs improvement'
+        : (matched
+            ? turn.successText
+            : (exhausted
+                ? (turn.pronunciation ? 'Incorrect' : VocabScript.exhaustedText)
+                : VocabScript.retryText));
+    final outcome = improve
+        ? AnalyticsConstants.contentNeedsImprovement
+        : (matched
+            ? AnalyticsConstants.contentCorrect
+            : (exhausted
+                ? AnalyticsConstants.contentIncorrect
+                : AnalyticsConstants.contentRetry));
     try {
       await _analytics.recordLessonAttempt(
         part: AssessmentPartContext.fromPartId(
@@ -394,11 +428,7 @@ class VocabCubit extends Cubit<GreetingsState> {
         attemptNumber: attemptNumber,
         maxAttempts: turn.maxAttempts,
         lesson: LessonAnalytics(
-          contentOutcome: matched
-              ? AnalyticsConstants.contentCorrect
-              : (exhausted
-                  ? AnalyticsConstants.contentIncorrect
-                  : AnalyticsConstants.contentRetry),
+          contentOutcome: outcome,
           contentMatched: matched,
           lessonFeedback: feedback,
         ),
@@ -656,8 +686,9 @@ class VocabCubit extends Cubit<GreetingsState> {
         messages.addAll(_savedTurns(turn, afterVideo: true));
       }
       final last = _analytics.peekPartDoc(VocabScript.questions.last.partId);
-      final correct = (last?['contentOutcome'] as String?)?.trim() ==
-          AnalyticsConstants.contentCorrect;
+      final outcome = (last?['contentOutcome'] as String?)?.trim() ?? '';
+      final correct = outcome == AnalyticsConstants.contentCorrect ||
+          outcome == AnalyticsConstants.contentNeedsImprovement;
       if (correct) {
         messages.add(_twin(AppStrings.vocabVoice12, afterVideo: true));
       }
@@ -712,6 +743,7 @@ class VocabCubit extends Cubit<GreetingsState> {
     final outcome = (doc?['contentOutcome'] as String?)?.trim() ?? '';
     return stored.locked ||
         outcome == AnalyticsConstants.contentCorrect ||
+        outcome == AnalyticsConstants.contentNeedsImprovement ||
         outcome == AnalyticsConstants.contentIncorrect ||
         stored.attemptCount >= turn.maxAttempts;
   }
@@ -739,16 +771,20 @@ class VocabCubit extends Cubit<GreetingsState> {
       }
       messages.add(
         _twin(
-          outcome == AnalyticsConstants.contentCorrect
-              ? turn.successKey
-              : (outcome == AnalyticsConstants.contentIncorrect
-                  ? AppStrings.greetingsFeedbackExhausted
-                  : AppStrings.greetingsFeedbackRetry),
-          tone: outcome == AnalyticsConstants.contentCorrect
-              ? GreetingsTone.correct
-              : (outcome == AnalyticsConstants.contentIncorrect
-                  ? GreetingsTone.exhausted
-                  : GreetingsTone.retry),
+          outcome == AnalyticsConstants.contentNeedsImprovement
+              ? AppStrings.resultNeedsImprovement
+              : (outcome == AnalyticsConstants.contentCorrect
+                  ? turn.successKey
+                  : (outcome == AnalyticsConstants.contentIncorrect
+                      ? AppStrings.greetingsFeedbackExhausted
+                      : AppStrings.greetingsFeedbackRetry)),
+          tone: outcome == AnalyticsConstants.contentNeedsImprovement
+              ? GreetingsTone.improve
+              : (outcome == AnalyticsConstants.contentCorrect
+                  ? GreetingsTone.correct
+                  : (outcome == AnalyticsConstants.contentIncorrect
+                      ? GreetingsTone.exhausted
+                      : GreetingsTone.retry)),
           afterVideo: afterVideo,
         ),
       );

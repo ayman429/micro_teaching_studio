@@ -15,7 +15,7 @@ enum GreetingsPhase {
 
 enum GreetingsSpeaker { twin, student }
 
-enum GreetingsTone { speech, correct, retry, exhausted }
+enum GreetingsTone { speech, correct, improve, retry, exhausted }
 
 class GreetingsMessage extends Equatable {
   const GreetingsMessage({

@@ -39,7 +39,23 @@ class GrammarScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.grammarExcellent(),
         successText: 'Excellent.',
-        matches: matchesWarmupMovement,
+        redWords: [
+          'stand',
+          'up',
+          'and',
+          'look',
+          'at',
+          'him',
+          'what',
+          'am',
+          'i',
+          'doing',
+          'look',
+          'at',
+          'me',
+          "i'm",
+          'jumping',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.grammarJump,
@@ -50,7 +66,7 @@ class GrammarScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.grammarExcellent(),
         successText: 'Excellent.',
-        matches: matchesJumpCommand,
+        redWords: ['jump', 'and', 'say', "i'm", 'jumping'],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.grammarMistake,
@@ -61,7 +77,24 @@ class GrammarScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.grammarExcellent(),
         successText: 'Excellent.',
-        matches: matchesJumpingMistake,
+        redWords: [
+          'no',
+          'the',
+          'students',
+          'did',
+          'not',
+          'respond',
+          'correctly',
+          'listen',
+          'carefully',
+          'to',
+          'the',
+          'correct',
+          'answer',
+          "i'm",
+          'jumping',
+          'repeat',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.grammarPicture,
@@ -72,7 +105,21 @@ class GrammarScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.grammarExcellent(),
         successText: 'Excellent.',
-        matches: matchesEatingPicture,
+        redWords: [
+          'a',
+          'picture',
+          'of',
+          'a',
+          'girl',
+          'eating',
+          'and',
+          'asked',
+          'them',
+          'what',
+          'is',
+          'she',
+          'doing',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.grammarEating,
@@ -83,7 +130,25 @@ class GrammarScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.grammarExcellent(),
         successText: 'Excellent.',
-        matches: matchesEatingCorrection,
+        redWords: [
+          'she',
+          'is',
+          'and',
+          'the',
+          'teacher',
+          'corrected',
+          'their',
+          'mistake',
+          'she',
+          'is',
+          'eating',
+          'and',
+          'asking',
+          'students',
+          'to',
+          'repeat',
+          'it',
+        ],
       ),
     ],
   );
@@ -238,53 +303,4 @@ class GrammarScript {
     }
     return selections;
   }
-}
-
-bool matchesWarmupMovement(String heard) {
-  final text = normalizeSpoken(heard);
-  final stand = text.contains('stand');
-  final jump = text.contains('jump');
-  final model = text.contains('what am i doing') ||
-      text.contains('i m jumping') ||
-      text.contains('i am jumping') ||
-      text.contains('look at me');
-  return stand && jump && model;
-}
-
-bool matchesJumpCommand(String heard) {
-  final text = normalizeSpoken(heard);
-  final jumping =
-      text.contains('i m jumping') || text.contains('i am jumping');
-  return text.contains('student') && text.contains('jump') && jumping;
-}
-
-bool matchesJumpingMistake(String heard) {
-  final text = normalizeSpoken(heard);
-  final wrong = text.contains('incorrect') ||
-      text.contains('wrong') ||
-      text.contains('did not') ||
-      text.contains('didn t') ||
-      text.contains('not correct');
-  final repair = text.contains('listen') || text.contains('repeat');
-  return wrong && text.contains('jump') && repair;
-}
-
-bool matchesEatingPicture(String heard) {
-  final text = normalizeSpoken(heard);
-  final picture = text.contains('picture') ||
-      text.contains('photo') ||
-      text.contains('image');
-  final girl = text.contains('girl') || text.contains('she');
-  final asked = text.contains('what is she doing') ||
-      text.contains('what she is doing');
-  return picture && girl && text.contains('eat') && asked;
-}
-
-bool matchesEatingCorrection(String heard) {
-  final text = normalizeSpoken(heard);
-  final wrong = text.contains('incorrect') ||
-      text.contains('wrong') ||
-      text.contains('not');
-  final eating = text.contains('eating');
-  return wrong && eating && text.contains('repeat');
 }

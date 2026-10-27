@@ -9,6 +9,7 @@ import 'package:micro_teaching_studio/features/analytics/models/assessment_part_
 import 'package:micro_teaching_studio/features/analytics/models/lesson_analytics.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
 import 'package:micro_teaching_studio/features/home/models/course_progress.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/pronunciation_constants.dart';
 import 'package:micro_teaching_studio/features/quiz/cubit/quiz_state.dart';
@@ -115,6 +116,11 @@ class QuizCubit extends Cubit<QuizState> {
         endedAt: ended,
         language: PronunciationConstants.defaultLanguage,
         region: PronunciationConstants.defaultRegion,
+      );
+      await CourseSessions.awardMatches(
+        _progress,
+        CourseProgressIds.sessionQuiz,
+        QuizScript.records(selections, graded: true),
       );
       if (grade.settles) {
         await _progress.completePart(CourseProgressIds.sessionQuiz);

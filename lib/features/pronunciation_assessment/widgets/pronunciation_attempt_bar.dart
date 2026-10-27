@@ -13,16 +13,17 @@ class PronunciationAttemptBar extends StatelessWidget {
     super.key,
     required this.state,
     required this.onRetry,
-    required this.onNext,
+    this.onNext,
   });
 
   final PronunciationState state;
   final VoidCallback onRetry;
-  final VoidCallback onNext;
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {
-    if (!state.showNext && !state.canRetry) {
+    final showNext = state.showNext && onNext != null;
+    if (!showNext && !state.canRetry) {
       return const SizedBox.shrink();
     }
     return Padding(
@@ -48,14 +49,14 @@ class PronunciationAttemptBar extends StatelessWidget {
                 ),
               ),
             ),
-            if (state.showNext) SizedBox(width: AppPadding.p8.w),
+            if (showNext) SizedBox(width: AppPadding.p8.w),
           ],
-          if (state.showNext)
+          if (showNext)
             Expanded(
               child: SizedBox(
                 height: AppSize.s40.h,
                 child: DefaultButtonWidget(
-                  onPressed: onNext,
+                  onPressed: onNext!,
                   color: ColorManager.navy,
                   radius: AppRadius.rCapsule.r,
                   elevation: 0,

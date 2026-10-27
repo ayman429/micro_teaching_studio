@@ -60,7 +60,7 @@ class ClassroomScript {
         successKey: AppStrings.classroomFeedbackExcellent,
         successAsset: AudioAssets.greetingsExcellent(),
         successText: 'Excellent!',
-        matches: matchesNoiseAgain,
+        redWords: ['making', 'noise'],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.classroomResponse,
@@ -71,18 +71,68 @@ class ClassroomScript {
         successKey: AppStrings.classroomFeedbackResponse,
         successAsset: AudioAssets.classroomTrue(),
         successText: responseText,
-        matches: matchesTeacherResponse,
+        redWords: [
+          'physical',
+          'actions',
+          'and',
+          'asking',
+          'students',
+          'to',
+          'imitate',
+          'him',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.classroomExpressions,
         promptKey: AppStrings.classroomVoice4,
         voiceAsset: AudioAssets.classroomVoice(4),
         referenceText:
-            'The teacher said: clap, clap, clap. If you can hear my voice imitate me. If you can hear my voice copy me. Class, class, class. One, two, three, eyes on me and students say: one two eyes on you, then the teacher says: macaroni and cheese, and students respond everybody freeze. Everyone hands up, hands on shoulders, hands on lips. Lips are zipped.',
+            'The teacher said: clap, clap, clap. If you can hear my voice imitate me. If you can hear my voice copy me. Class, class, class. One, two, three, eyes on me and students say: one two eyes on you, then the teacher says: macaroni and cheese, and students respond Everybody freeze. Everyone hands up, hands on shoulders, hands on lips. Lips are zipped.',
         successKey: AppStrings.classroomFeedbackExcellent,
         successAsset: AudioAssets.greetingsExcellent(),
         successText: 'Excellent!',
-        matches: matchesAttentionExpressions,
+        redWords: [
+          'clap',
+          'clap',
+          'clap',
+          'if',
+          'you',
+          'can',
+          'hear',
+          'my',
+          'voice',
+          'imitate',
+          'me',
+          'if',
+          'you',
+          'can',
+          'hear',
+          'my',
+          'voice',
+          'copy',
+          'me',
+          'class',
+          'class',
+          'class',
+          'one',
+          'two',
+          'three',
+          'eyes',
+          'on',
+          'me',
+          'everyone',
+          'hands',
+          'up',
+          'hands',
+          'on',
+          'shoulders',
+          'hands',
+          'on',
+          'lips',
+          'lips',
+          'are',
+          'zipped',
+        ],
       ),
     ],
   );
@@ -237,44 +287,3 @@ class ClassroomScript {
   }
 }
 
-bool matchesNoiseAgain(String heard) {
-  final text = normalizeSpoken(heard);
-  final affirmed = text.contains('students') &&
-      (text.contains('noise') || text.contains('noisy')) &&
-      text.contains('again');
-  final denied = text.contains('not') ||
-      text.contains('no noise') ||
-      text.contains('quiet') ||
-      text.contains('arent') ||
-      text.contains('dont');
-  return affirmed && !denied;
-}
-
-bool matchesTeacherResponse(String heard) {
-  final text = normalizeSpoken(heard);
-  final physical = text.contains('physical') || text.contains('action');
-  final imitate = text.contains('imitat') || text.contains('copy');
-  return text.contains('teacher') && physical && imitate;
-}
-
-bool matchesAttentionExpressions(String heard) {
-  final text = normalizeSpoken(heard);
-  final checks = <bool>[
-    text.contains('clap'),
-    text.contains('imitate me') || text.contains('imitate'),
-    text.contains('copy me') || text.contains('copy'),
-    text.contains('class class'),
-    text.contains('eyes on me'),
-    text.contains('eyes on you'),
-    text.contains('macaroni'),
-    text.contains('freeze'),
-    text.contains('hands up'),
-    text.contains('shoulders'),
-    text.contains('lips') || text.contains('zipped'),
-  ];
-  var hits = 0;
-  for (final check in checks) {
-    if (check) hits++;
-  }
-  return hits >= 7;
-}

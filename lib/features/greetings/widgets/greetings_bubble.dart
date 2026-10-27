@@ -108,6 +108,13 @@ class GreetingsBubble extends StatelessWidget {
           label: ColorManager.emerald,
           body: ColorManager.emerald,
         );
+      case GreetingsTone.improve:
+        return const _BubblePalette(
+          background: ColorManager.skySoft,
+          border: ColorManager.skyBorder,
+          label: ColorManager.skyDeep,
+          body: ColorManager.skyDeep,
+        );
       case GreetingsTone.retry:
         return const _BubblePalette(
           background: ColorManager.amberWash,

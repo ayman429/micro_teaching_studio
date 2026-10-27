@@ -41,7 +41,22 @@ class PresentationScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.presentationExcellent(),
         successText: 'Excellent.',
-        matches: matchesLessonStart,
+        redWords: [
+          'today',
+          'we',
+          'are',
+          'going',
+          'to',
+          'do',
+          'something',
+          'very',
+          'exciting',
+          'but',
+          'first',
+          'look',
+          'at',
+          'me',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.presentTechnique,
@@ -52,7 +67,17 @@ class PresentationScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.presentationExcellent(),
         successText: 'Excellent.',
-        matches: matchesDrinkingTechnique,
+        redWords: [
+          'he',
+          'used',
+          'tpr',
+          'drinking',
+          'water',
+          'what',
+          'am',
+          'i',
+          'doing',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.presentPraise,
@@ -63,7 +88,17 @@ class PresentationScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.presentationExcellent(),
         successText: 'Excellent.',
-        matches: matchesPositiveReinforcement,
+        redWords: [
+          'excellent',
+          'farida',
+          'answer',
+          'moaz',
+          'keep',
+          'up',
+          'the',
+          'good',
+          'work',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.presentMoaz,
@@ -74,29 +109,98 @@ class PresentationScript {
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.presentationExcellent(),
         successText: 'Excellent.',
-        matches: matchesMoazTechnique,
+        redWords: [
+          'yes',
+          'he',
+          'used',
+          'the',
+          'suitable',
+          'technique',
+          'acting',
+          'see',
+          'the',
+          'action',
+          'understand',
+          'the',
+          'meaning',
+          'action',
+          'happening',
+          'now',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.presentCorrection,
         promptKey: AppStrings.presentationVoice6,
         voiceAsset: AudioAssets.presentationVoice(6),
         referenceText:
-            'Yes, it is effective because he used indirect teacher correction, by repeating the students\' answer in a correct way.',
+            'Yes, it\'s effective because he used indirect teacher correction, by repeating the students\' answer in a correct way. When the students said "he write, writing notebook teacher", he repeated it correctly.',
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.presentationExcellent(),
         successText: 'Excellent.',
-        matches: matchesIndirectCorrection,
+        redWords: [
+          'yes',
+          "it's",
+          'effective',
+          'because',
+          'he',
+          'used',
+          'indirect',
+          'teacher',
+          'correction',
+          'repeating',
+          'the',
+          'students',
+          'answer',
+          'in',
+          'a',
+          'correct',
+          'way',
+          'the',
+          'students',
+          'said',
+          'he',
+          'write',
+          'writing',
+          'notebook',
+          'teacher',
+          'he',
+          'repeated',
+          'it',
+          'correctly',
+        ],
       ),
       GreetingsQuestion(
         partId: CourseProgressIds.presentPictures,
         promptKey: AppStrings.presentationVoice7,
         voiceAsset: AudioAssets.presentationVoice(7),
         referenceText:
-            'The teacher showed students some pictures on the board and asked them what the person in the picture is doing, and they wrote sentences on the board.',
+            'The teacher showed students some pictures on the board and asked them what is the person in the picture doing and they wrote sentences on the board.',
         successKey: AppStrings.greetingsFeedbackExcellent,
         successAsset: AudioAssets.presentationExcellent(),
         successText: 'Excellent.',
-        matches: matchesPicturePractice,
+        redWords: [
+          'pictures',
+          'on',
+          'the',
+          'board',
+          'and',
+          'asked',
+          'what',
+          'is',
+          'the',
+          'person',
+          'in',
+          'the',
+          'picture',
+          'doing',
+          'and',
+          'they',
+          'wrote',
+          'sentences',
+          'on',
+          'the',
+          'board',
+        ],
       ),
     ],
   );
@@ -225,59 +329,4 @@ class PresentationScript {
     }
     return selections;
   }
-}
-
-bool matchesLessonStart(String heard) {
-  final text = normalizeSpoken(heard);
-  final hook = text.contains('look at me') || text.contains('exciting');
-  final opening = text.contains('today') || text.contains('motivat');
-  return hook && opening;
-}
-
-bool matchesDrinkingTechnique(String heard) {
-  final text = normalizeSpoken(heard);
-  final drink = text.contains('drink');
-  final ask = text.contains('what am i doing') ||
-      text.contains('tpr') ||
-      text.contains('moaz');
-  return drink && ask;
-}
-
-bool matchesPositiveReinforcement(String heard) {
-  final text = normalizeSpoken(heard);
-  final excellent = text.contains('excellent');
-  final encourage = text.contains('keep up') ||
-      text.contains('good work') ||
-      text.contains('farida');
-  return excellent && encourage;
-}
-
-bool matchesMoazTechnique(String heard) {
-  final text = normalizeSpoken(heard);
-  final agreed = text.contains('yes') || text.contains('suitable');
-  final acting = text.contains('act') || text.contains('see');
-  final now = text.contains('right now') || text.contains('happening');
-  final denied = text.contains('not suitable') || text.contains('unsuitable');
-  return agreed && acting && now && !denied;
-}
-
-bool matchesIndirectCorrection(String heard) {
-  final text = normalizeSpoken(heard);
-  final agreed = text.contains('yes') || text.contains('effective');
-  final method = text.contains('indirect') ||
-      (text.contains('repeat') && text.contains('correct'));
-  final denied =
-      text.contains('not effective') || text.contains('ineffective');
-  return agreed && method && !denied;
-}
-
-bool matchesPicturePractice(String heard) {
-  final text = normalizeSpoken(heard);
-  final pictures = text.contains('picture');
-  final board = text.contains('board');
-  final task = text.contains('doing') ||
-      text.contains('sentence') ||
-      text.contains('wrote') ||
-      text.contains('write');
-  return pictures && board && task;
 }

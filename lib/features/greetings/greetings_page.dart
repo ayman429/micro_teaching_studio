@@ -157,6 +157,7 @@ class _GreetingsBodyState extends State<_GreetingsBody> {
                           ),
                           asset: context.read<GreetingsCubit>().plan.videoAsset,
                           introLabel: AppStrings.greetingsVideoIntro,
+                          limitPlays: true,
                           onCompleted: () =>
                               context.read<GreetingsCubit>().onVideoCompleted(),
                           onPlaybackStarted: () {
@@ -164,11 +165,13 @@ class _GreetingsBodyState extends State<_GreetingsBody> {
                             final phase = cubit.state.phase;
                             final intro = phase == GreetingsPhase.intro ||
                                 phase == GreetingsPhase.watching;
-                            if (!intro) {
-                              _videoHandle.pause();
+                            if (intro) {
+                              unawaited(cubit.onVideoStarted());
                               return;
                             }
-                            unawaited(cubit.onVideoStarted());
+                            if (!cubit.canReplayVideo) {
+                              _videoHandle.pause();
+                            }
                           },
                           handle: _videoHandle,
                         ),

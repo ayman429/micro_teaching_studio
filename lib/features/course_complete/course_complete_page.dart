@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:micro_teaching_studio/common/resources/color_manager.dart';
@@ -10,6 +11,8 @@ import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/common/widgets/default_button_widget.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
@@ -51,6 +54,18 @@ class _CourseCompletePageState extends State<CourseCompletePage>
       curve: const Interval(0.35, 1, curve: Curves.easeOut),
     );
     _controller.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final finished =
+          context.read<CourseProgressCubit>().state.finishedSessions;
+      if (CourseSessions.allFinished(finished)) return;
+      final next = CourseSessions.firstUnfinished(finished);
+      if (next == null) {
+        CourseFlow.goHome(context);
+        return;
+      }
+      CourseFlow.openSession(context, next.module, next.session);
+    });
   }
 
   @override

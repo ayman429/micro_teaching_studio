@@ -405,6 +405,11 @@ class AppStrings {
   static const String modulesStatLabel = "modulesStatLabel";
   static const String framesLabel = "framesLabel";
   static const String mainMenuAction = "mainMenuAction";
+  static const String nextLesson = "nextLesson";
+  static const String studyAgain = "studyAgain";
+  static const String sessionScore = "sessionScore";
+  static const String videoPlaysLeft = "videoPlaysLeft";
+  static const String continueAction = "continueAction";
   static const String courseCompleteTitle = "courseCompleteTitle";
   static const String courseCompleteHeadline = "courseCompleteHeadline";
   static const String courseCompleteMessage = "courseCompleteMessage";

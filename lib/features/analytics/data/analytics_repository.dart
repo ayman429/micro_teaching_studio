@@ -46,10 +46,13 @@ class AnalyticsRepository {
   final Map<String, Map<String, dynamic>> _partDocs = {};
   final Map<String, List<Map<String, dynamic>>> _attemptDocs = {};
   final Set<String> _completedIds = {};
+  final Set<String> _taskPointIds = {};
 
   bool get isHydrated => _hydrated;
 
   Set<String> get cachedCompletedIds => Set<String>.from(_completedIds);
+
+  Set<String> get cachedTaskPointIds => Set<String>.from(_taskPointIds);
 
   StoredPartState peekStoredState(String partId) {
     return _parts[partId] ??
@@ -77,6 +80,7 @@ class AnalyticsRepository {
     _partDocs.clear();
     _attemptDocs.clear();
     _completedIds.clear();
+    _taskPointIds.clear();
   }
 
   Future<void> hydrate() {
@@ -170,6 +174,20 @@ class AnalyticsRepository {
         _parts[partId] = _storedFromPart(data, result);
         if (_parts[partId]!.locked) _completedIds.add(partId);
       }
+      try {
+        final user = await _userProgress
+            .doc(uid)
+            .get()
+            .timeout(AnalyticsConstants.writeTimeout);
+        final raw = user.data()?['taskPointIds'];
+        if (raw is List) {
+          _taskPointIds
+            ..clear()
+            ..addAll(raw.map((item) => item.toString()));
+        }
+      } catch (error, stack) {
+        log('analytics task points: $error', stackTrace: stack);
+      }
       _hydrated = true;
     } catch (error, stack) {
       log('analytics hydrate: $error', stackTrace: stack);
@@ -238,6 +256,7 @@ class AnalyticsRepository {
         ? status == AnalyticsConstants.statusCompleted ||
             data['locked'] == true ||
             outcome == AnalyticsConstants.contentCorrect ||
+            outcome == AnalyticsConstants.contentNeedsImprovement ||
             outcome == AnalyticsConstants.contentIncorrect ||
             attemptCount >= limit
         : status == AnalyticsConstants.statusCompleted ||
@@ -487,6 +506,58 @@ class AnalyticsRepository {
       outcome: AnalyticsConstants.outcomeFailed,
       errorMessage: errorMessage,
     );
+  }
+
+  Future<void> saveTaskPoints(Set<String> ids) async {
+    _taskPointIds
+      ..clear()
+      ..addAll(ids);
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    await _commitOne(
+      _userProgress.doc(uid),
+      {
+        ..._identity(uid),
+        'taskPointIds': ids.toList(),
+        'taskPoints': ids.length,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      merge: true,
+      label: 'task points',
+    );
+  }
+
+  Future<void> reopenParts(Iterable<String> partIds) async {
+    final uid = _uid;
+    for (final partId in partIds) {
+      final previous = Map<String, dynamic>.from(_partDocs[partId] ?? {});
+      previous['locked'] = false;
+      previous['status'] = AnalyticsConstants.statusInProgress;
+      previous['attemptCount'] = 0;
+      previous['contentOutcome'] = '';
+      previous['contentMatched'] = false;
+      _partDocs[partId] = previous;
+      _parts[partId] = _storedFromPart(previous, null);
+      _completedIds.remove(partId);
+      if (uid.isEmpty) continue;
+      try {
+        await _commitOne(
+          _partProgress.doc(_partDocId(uid, partId)),
+          {
+            'locked': false,
+            'status': AnalyticsConstants.statusInProgress,
+            'attemptCount': 0,
+            'contentOutcome': '',
+            'contentMatched': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          merge: true,
+          label: 'reopen part',
+        );
+      } catch (error, stack) {
+        log('analytics reopen: $error', stackTrace: stack);
+      }
+    }
   }
 
   Future<void> markCompleted(

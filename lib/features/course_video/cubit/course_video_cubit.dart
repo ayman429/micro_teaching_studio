@@ -10,8 +10,29 @@ import 'package:micro_teaching_studio/features/course_video/cubit/course_video_s
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 
+class CourseVideoPlays {
+  static const int maxPlays = 3;
+  static final Map<String, int> _counts = {};
+
+  static String _key(String asset) => asset.replaceAll('\\', '/').toLowerCase();
+
+  static int used(String asset) => _counts[_key(asset)] ?? 0;
+
+  static int record(String asset) {
+    final next = used(asset) + 1;
+    _counts[_key(asset)] = next;
+    return next;
+  }
+
+  static void reset(String asset) {
+    _counts.remove(_key(asset));
+  }
+}
+
 class CourseVideoCubit extends Cubit<CourseVideoState> {
-  CourseVideoCubit() : super(const CourseVideoState());
+  CourseVideoCubit({this.limitPlays = false}) : super(const CourseVideoState());
+
+  final bool limitPlays;
 
   VideoPlayerController? _controller;
   String? _asset;
@@ -40,6 +61,7 @@ class CourseVideoCubit extends Cubit<CourseVideoState> {
         CourseVideoState(
           status: CourseVideoStatus.ready,
           duration: controller.value.duration,
+          playsUsed: limitPlays ? CourseVideoPlays.used(asset) : 0,
         ),
       );
       if (_playWhenReady) {
@@ -78,6 +100,12 @@ class CourseVideoCubit extends Cubit<CourseVideoState> {
   Future<void> play() async {
     final controller = _controller;
     if (controller == null || !state.isReady) return;
+    final asset = _asset;
+    if (limitPlays &&
+        asset != null &&
+        CourseVideoPlays.used(asset) >= CourseVideoPlays.maxPlays) {
+      return;
+    }
     try {
       await controller.play();
     } catch (error, stack) {
@@ -160,6 +188,10 @@ class CourseVideoCubit extends Cubit<CourseVideoState> {
   Future<void> _onCompleted() async {
     if (_handlingEnd) return;
     _handlingEnd = true;
+    final asset = _asset;
+    final playsUsed = limitPlays && asset != null
+        ? CourseVideoPlays.record(asset)
+        : state.playsUsed;
     if (!isClosed) {
       emit(
         state.copyWith(
@@ -167,6 +199,7 @@ class CourseVideoCubit extends Cubit<CourseVideoState> {
           progress: 0,
           position: Duration.zero,
           completed: true,
+          playsUsed: playsUsed,
         ),
       );
     }

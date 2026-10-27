@@ -14,6 +14,8 @@ import 'package:micro_teaching_studio/features/analytics/models/assessment_part_
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/session_end_bar.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/session_score_line.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_word.dart';
@@ -33,14 +35,44 @@ class PhonicsPage extends StatefulWidget {
 class _PhonicsPageState extends State<PhonicsPage> {
   int _selectedIndex = 0;
   int _tab = 0;
+  var _generation = 0;
+  var _instructionsReady = false;
+  var _clipReady = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _tab != 0) return;
-      unawaited(playSessionInstructions(1, 2));
+      _playInstructions();
     });
+  }
+
+  void _playInstructions() {
+    setState(() => _instructionsReady = false);
+    unawaited(
+      playSessionInstructions(
+        1,
+        2,
+        onFinished: () {
+          if (!mounted) return;
+          setState(() => _instructionsReady = true);
+        },
+      ),
+    );
+  }
+
+  Future<void> _restudy() async {
+    await CourseFlow.prepareRestudy(context, module: 1, session: 2);
+    if (!mounted) return;
+    setState(() {
+      _generation++;
+      _tab = 0;
+      _selectedIndex = 0;
+      _instructionsReady = false;
+      _clipReady = false;
+    });
+    _playInstructions();
   }
 
   @override
@@ -53,6 +85,7 @@ class _PhonicsPageState extends State<PhonicsPage> {
   Widget build(BuildContext context) {
     final word = PhonicsWord.catalog[_selectedIndex];
     return MultiBlocProvider(
+      key: ValueKey(_generation),
       providers: [
         BlocProvider(
           create: (_) {
@@ -88,13 +121,19 @@ class _PhonicsPageState extends State<PhonicsPage> {
                       AppPadding.p16.w,
                       0,
                     ),
-                    child: CourseSegmentedTabs(
-                      labels: [
-                        AppStrings.instructionsTab.tr(),
-                        AppStrings.practiceTab.tr(),
+                    child: Column(
+                      children: [
+                        const SessionScoreLine(module: 1, session: 2),
+                        CourseSegmentedTabs(
+                          labels: [
+                            AppStrings.instructionsTab.tr(),
+                            AppStrings.practiceTab.tr(),
+                          ],
+                          selectedIndex: _tab,
+                          enabled: [true, _instructionsReady],
+                          onSelected: (index) => _selectTab(context, index),
+                        ),
                       ],
-                      selectedIndex: _tab,
-                      onSelected: (index) => _selectTab(context, index),
                     ),
                   ),
                   Expanded(
@@ -111,6 +150,7 @@ class _PhonicsPageState extends State<PhonicsPage> {
                             module: 1,
                             session: 2,
                             sessionName: AppStrings.phonicsEnglishTitle.tr(),
+                            startEnabled: _instructionsReady,
                             onStart: () => _selectTab(context, 1),
                           )
                         else ...[
@@ -128,6 +168,7 @@ class _PhonicsPageState extends State<PhonicsPage> {
                                   word: PhonicsWord.catalog[index],
                                   isSelected: index == _selectedIndex,
                                   onTap: () {
+                                    if (index > _selectedIndex) return;
                                     setState(() => _selectedIndex = index);
                                     unawaited(
                                       _restoreAndListen(
@@ -141,22 +182,40 @@ class _PhonicsPageState extends State<PhonicsPage> {
                             ),
                           ),
                           SizedBox(height: AppPadding.p16.h),
-                          Builder(
-                            builder: (context) {
-                              return PhonicsWordCard(
-                                word: word,
-                                onSpeak: () {
-                                  context.read<PronunciationCubit>().toggle(
-                                        referenceText: word.wordKey.tr(),
-                                        enableProsody: false,
-                                        part: AssessmentPartContext.phonics(
-                                          word: word,
-                                          referenceText: word.wordKey.tr(),
-                                          referenceIpa: word.ipaKey.tr(),
-                                        ),
-                                      );
-                                },
-                                onNext: () => _goNext(context),
+                          BlocBuilder<PronunciationCubit, PronunciationState>(
+                            builder: (context, state) {
+                              final last = _selectedIndex >=
+                                  PhonicsWord.catalog.length - 1;
+                              final terminal = state.locked || state.showNext;
+                              return Column(
+                                children: [
+                                  PhonicsWordCard(
+                                    word: word,
+                                    onSpeak: () {
+                                      if (!_clipReady && !state.isScored) {
+                                        return;
+                                      }
+                                      context.read<PronunciationCubit>().toggle(
+                                            referenceText: word.wordKey.tr(),
+                                            enableProsody: false,
+                                            part: AssessmentPartContext.phonics(
+                                              word: word,
+                                              referenceText: word.wordKey.tr(),
+                                              referenceIpa: word.ipaKey.tr(),
+                                            ),
+                                          );
+                                    },
+                                    onNext: last || !terminal
+                                        ? null
+                                        : () => _goNext(context),
+                                  ),
+                                  if (last && terminal)
+                                    SessionEndBar(
+                                      module: 1,
+                                      session: 2,
+                                      onRestudy: () => unawaited(_restudy()),
+                                    ),
+                                ],
                               );
                             },
                           ),
@@ -174,10 +233,11 @@ class _PhonicsPageState extends State<PhonicsPage> {
   }
 
   void _selectTab(BuildContext context, int index) {
+    if (index > 0 && !_instructionsReady) return;
     if (index == _tab) return;
     setState(() => _tab = index);
     if (index == 0) {
-      unawaited(playSessionInstructions(1, 2));
+      _playInstructions();
       return;
     }
     unawaited(
@@ -199,7 +259,6 @@ class _PhonicsPageState extends State<PhonicsPage> {
       );
       return;
     }
-    CourseFlow.next(context);
   }
 
   Future<void> _restoreAndListen(PronunciationCubit cubit, int index) async {
@@ -207,11 +266,17 @@ class _PhonicsPageState extends State<PhonicsPage> {
     if (cubit.state.isScored ||
         cubit.state.isRecording ||
         cubit.state.isAssessing) {
+      if (mounted) setState(() => _clipReady = true);
       return;
     }
     final word = PhonicsWord.catalog[index];
+    if (mounted) setState(() => _clipReady = false);
     await instance<CourseAudioCubit>().play(
       AudioAssets.phonicsClip(word.wordKey.tr()),
+      onFinished: () {
+        if (!mounted) return;
+        setState(() => _clipReady = true);
+      },
     );
   }
 

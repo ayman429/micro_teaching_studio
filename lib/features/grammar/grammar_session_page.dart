@@ -12,7 +12,10 @@ import 'package:micro_teaching_studio/features/analytics/data/analytics_reposito
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/session_score_line.dart';
 import 'package:micro_teaching_studio/features/grammar/grammar_script.dart';
+import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
 import 'package:micro_teaching_studio/features/grammar/cubit/grammar_quiz_cubit.dart';
 import 'package:micro_teaching_studio/features/grammar/widgets/grammar_quiz_card.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_cubit.dart';
@@ -22,12 +25,31 @@ import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pro
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 
-class GrammarSessionPage extends StatelessWidget {
+class GrammarSessionPage extends StatefulWidget {
   const GrammarSessionPage({super.key});
+
+  @override
+  State<GrammarSessionPage> createState() => _GrammarSessionPageState();
+}
+
+class _GrammarSessionPageState extends State<GrammarSessionPage> {
+  var _generation = 0;
+
+  Future<void> _restudy() async {
+    await CourseFlow.prepareRestudy(
+      context,
+      module: 3,
+      session: 2,
+      videoAsset: GrammarScript.plan.videoAsset,
+    );
+    if (!mounted) return;
+    setState(() => _generation++);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
+      key: ValueKey(_generation),
       providers: [
         BlocProvider(
           create: (_) => GreetingsCubit(
@@ -47,7 +69,10 @@ class GrammarSessionPage extends StatelessWidget {
           )..start(),
         ),
       ],
-      child: const _GrammarSessionBody(),
+      child: _GrammarSessionBody(
+        key: ValueKey(_generation),
+        onRestudy: _restudy,
+      ),
     );
   }
 }
@@ -57,7 +82,9 @@ class GrammarSessionView extends GrammarSessionPage {
 }
 
 class _GrammarSessionBody extends StatefulWidget {
-  const _GrammarSessionBody();
+  const _GrammarSessionBody({super.key, required this.onRestudy});
+
+  final Future<void> Function() onRestudy;
 
   @override
   State<_GrammarSessionBody> createState() => _GrammarSessionBodyState();
@@ -66,6 +93,21 @@ class _GrammarSessionBody extends StatefulWidget {
 class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
   var _tab = 0;
   var _lessonStarted = false;
+  var _instructionsReady = false;
+
+  void _playInstructions() {
+    setState(() => _instructionsReady = false);
+    unawaited(
+      playSessionInstructions(
+        3,
+        2,
+        onFinished: () {
+          if (!mounted) return;
+          setState(() => _instructionsReady = true);
+        },
+      ),
+    );
+  }
   var _switching = false;
   var _routeCurrent = true;
 
@@ -74,7 +116,7 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _tab != 0) return;
-      unawaited(playSessionInstructions(3, 2));
+      _playInstructions();
     });
   }
 
@@ -99,7 +141,11 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
       title: AppStrings.sessionPresentContinuousWarmup.tr(),
       showSkip: false,
       bodyGradient: ColorManager.gradientFluencySurface,
-      body: Column(
+      body: BlocBuilder<GreetingsCubit, GreetingsState>(
+        buildWhen: (previous, current) => previous.phase != current.phase,
+        builder: (context, lesson) {
+          final lessonDone = lesson.phase == GreetingsPhase.done;
+          return Column(
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(
@@ -108,18 +154,30 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
               AppPadding.p16.w,
               0,
             ),
-            child: CourseSegmentedTabs(
-              labels: [
-                AppStrings.instructionsTab.tr(),
-                AppStrings.grammarTab.tr(),
-                AppStrings.quizTab.tr(),
+            child: Column(
+              children: [
+                const SessionScoreLine(module: 3, session: 2),
+                CourseSegmentedTabs(
+                  labels: [
+                    AppStrings.instructionsTab.tr(),
+                    AppStrings.grammarTab.tr(),
+                    AppStrings.quizTab.tr(),
+                  ],
+                  selectedIndex: _tab,
+                  enabled: [
+                    true,
+                    _instructionsReady,
+                    _instructionsReady && lessonDone,
+                  ],
+                  onSelected: _selectTab,
+                ),
               ],
-              selectedIndex: _tab,
-              onSelected: _selectTab,
             ),
           ),
           Expanded(child: _panel()),
         ],
+      );
+        },
       ),
     );
   }
@@ -131,7 +189,9 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
         onContinue: () => unawaited(_selectTab(2)),
       );
     }
-    if (_tab == 2) return const GrammarQuizCard();
+    if (_tab == 2) {
+      return GrammarQuizCard(onRestudy: () => unawaited(widget.onRestudy()));
+    }
     return ListView(
       padding: EdgeInsets.fromLTRB(
         AppPadding.p16.w,
@@ -144,6 +204,7 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
           module: 3,
           session: 2,
           sessionName: AppStrings.sessionPresentContinuousWarmup.tr(),
+          startEnabled: _instructionsReady,
           onStart: () => unawaited(_selectTab(1)),
         ),
       ],
@@ -151,6 +212,10 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
   }
 
   Future<void> _selectTab(int index) async {
+    if (index > 0 && !_instructionsReady) return;
+    final lessonDone =
+        context.read<GreetingsCubit>().state.phase == GreetingsPhase.done;
+    if (index > 1 && !lessonDone) return;
     if (_switching || index == _tab || !mounted) return;
     _switching = true;
     final previous = _tab;
@@ -170,7 +235,7 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
         }
       }
       if (index == 2) await quiz.onTabShown();
-      if (index == 0) await playSessionInstructions(3, 2);
+      if (index == 0) _playInstructions();
     } finally {
       _switching = false;
     }

@@ -83,19 +83,29 @@ class _MyAppState extends State<MyApp> {
                     //       minScaleFactor: 0.9,
                     //       maxScaleFactor: 1.05,
                     //     );
-                    return MediaQuery(
-                      data: MediaQuery.of(context).copyWith(
-                        textScaler:
-                            const TextScaler.linear(1.0), // Flutter 3.10+
-                        // أو textScaleFactor: 1.0 لو نسخة أقدم
-                      ),
-                      child: GestureDetector(
+                    return   GestureDetector(
                         onTap: () {
                           FocusScope.of(context).unfocus(); //  يقفل الكيبورد
                         },
                         child: child!,
-                      ),
-                    );
+                      );
+                 
+                    //  MediaQuery(
+                    //   data: MediaQuery.of(context).copyWith(
+                    //     textScaler:
+                    //         const TextScaler.linear(1.0), // Flutter 3.10+
+                    //     // أو textScaleFactor: 1.0 لو نسخة أقدم
+                    //   ),
+                    //   child:
+                    //    GestureDetector(
+                    //     onTap: () {
+                    //       FocusScope.of(context).unfocus(); //  يقفل الكيبورد
+                    //     },
+                    //     child: child!,
+                    //   ),
+                 
+                    // )
+                    // ;
                   },
                 ),
               ),

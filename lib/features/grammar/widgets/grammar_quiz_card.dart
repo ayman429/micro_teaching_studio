@@ -10,13 +10,16 @@ import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/common/widgets/default_button_widget.dart';
 import 'package:micro_teaching_studio/features/classroom/cubit/classroom_quiz_state.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/session_end_bar.dart';
 import 'package:micro_teaching_studio/features/grammar/cubit/grammar_quiz_cubit.dart';
 import 'package:micro_teaching_studio/features/grammar/grammar_script.dart';
 import 'package:micro_teaching_studio/features/quiz/quiz_script.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
 class GrammarQuizCard extends StatelessWidget {
-  const GrammarQuizCard({super.key});
+  const GrammarQuizCard({super.key, required this.onRestudy});
+
+  final VoidCallback onRestudy;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +132,12 @@ class GrammarQuizCard extends StatelessWidget {
                         loadingColor: ColorManager.white,
                       ),
                     ),
+                    if (state.settled)
+                      SessionEndBar(
+                        module: 3,
+                        session: 2,
+                        onRestudy: onRestudy,
+                      ),
                   ],
                 ),
               ),

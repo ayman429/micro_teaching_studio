@@ -19,6 +19,7 @@ class AnalyticsConstants {
   static const String contentCorrect = 'correct';
   static const String contentRetry = 'retry';
   static const String contentIncorrect = 'incorrect';
+  static const String contentNeedsImprovement = 'needs_improvement';
   static const String contentNoResponse = 'no_response';
 
   static const String statusNotStarted = 'not_started';

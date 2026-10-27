@@ -36,6 +36,7 @@ class CourseVideoPlayer extends StatelessWidget {
     this.onCompleted,
     this.onPlaybackStarted,
     this.handle,
+    this.limitPlays = false,
   });
 
   final String asset;
@@ -44,12 +45,13 @@ class CourseVideoPlayer extends StatelessWidget {
   final VoidCallback? onCompleted;
   final VoidCallback? onPlaybackStarted;
   final CourseVideoHandle? handle;
+  final bool limitPlays;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) {
-        final cubit = CourseVideoCubit()..load(asset);
+        final cubit = CourseVideoCubit(limitPlays: limitPlays)..load(asset);
         handle?._cubit = cubit;
         return cubit;
       },
@@ -58,6 +60,7 @@ class CourseVideoPlayer extends StatelessWidget {
         qualityLabel: qualityLabel,
         onCompleted: onCompleted,
         onPlaybackStarted: onPlaybackStarted,
+        limitPlays: limitPlays,
       ),
     );
   }
@@ -69,12 +72,14 @@ class _CourseVideoCard extends StatefulWidget {
     required this.qualityLabel,
     this.onCompleted,
     this.onPlaybackStarted,
+    this.limitPlays = false,
   });
 
   final String introLabel;
   final String qualityLabel;
   final VoidCallback? onCompleted;
   final VoidCallback? onPlaybackStarted;
+  final bool limitPlays;
 
   @override
   State<_CourseVideoCard> createState() => _CourseVideoCardState();
@@ -153,7 +158,14 @@ class _CourseVideoCardState extends State<_CourseVideoCard>
                     width: double.infinity,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () => context.read<CourseVideoCubit>().toggle(),
+                      onTap: () {
+                        final video = context.read<CourseVideoCubit>();
+                        if (widget.limitPlays &&
+                            video.state.playsUsed >= CourseVideoPlays.maxPlays) {
+                          return;
+                        }
+                        video.toggle();
+                      },
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
@@ -233,6 +245,30 @@ class _CourseVideoCardState extends State<_CourseVideoCard>
                                       letterSpacing: AppLetterSpacing.video,
                                     ),
                                   ),
+                                  if (widget.limitPlays) ...[
+                                    SizedBox(height: AppPadding.p4.h),
+                                    BlocBuilder<CourseVideoCubit,
+                                        CourseVideoState>(
+                                      buildWhen: (previous, current) =>
+                                          previous.playsUsed !=
+                                          current.playsUsed,
+                                      builder: (context, video) {
+                                        final left = CourseVideoPlays.maxPlays -
+                                            video.playsUsed;
+                                        return Text(
+                                          AppStrings.videoPlaysLeft.tr(
+                                            namedArgs: {
+                                              'count': '${left < 0 ? 0 : left}',
+                                            },
+                                          ),
+                                          style: getBoldStyle(
+                                            fontSize: FontSize.s10.sp,
+                                            color: ColorManager.onDarkMuted,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ],
                               );
                             },

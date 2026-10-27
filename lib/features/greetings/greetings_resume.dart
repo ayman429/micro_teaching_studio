@@ -17,6 +17,7 @@ class GreetingsPartSnapshot {
   bool get settled {
     if (!reached) return false;
     if (contentOutcome == AnalyticsConstants.contentCorrect ||
+        contentOutcome == AnalyticsConstants.contentNeedsImprovement ||
         contentOutcome == AnalyticsConstants.contentIncorrect) {
       return true;
     }
@@ -25,7 +26,10 @@ class GreetingsPartSnapshot {
   }
 
   bool get answeredCorrectly {
-    if (contentOutcome == AnalyticsConstants.contentCorrect) return true;
+    if (contentOutcome == AnalyticsConstants.contentCorrect ||
+        contentOutcome == AnalyticsConstants.contentNeedsImprovement) {
+      return true;
+    }
     if (contentOutcome == AnalyticsConstants.contentIncorrect) return false;
     return locked &&
         attemptCount > 0 &&

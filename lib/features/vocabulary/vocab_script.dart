@@ -14,7 +14,7 @@ class VocabTurn {
     required this.successKey,
     required this.successAsset,
     required this.successText,
-    this.matches,
+    this.redWords = const [],
   });
 
   final String partId;
@@ -26,7 +26,7 @@ class VocabTurn {
   final String successKey;
   final String successAsset;
   final String successText;
-  final bool Function(String heard)? matches;
+  final List<String> redWords;
 }
 
 class VocabScript {
@@ -106,7 +106,16 @@ class VocabScript {
       successKey: AppStrings.greetingsFeedbackExcellent,
       successAsset: AudioAssets.vocabExcellent(),
       successText: questionSuccessText,
-      matches: matchesTeachingStages,
+      redWords: [
+        'explaining',
+        'meaning',
+        'giving',
+        'the',
+        'definition',
+        'and',
+        'concept',
+        'check',
+      ],
     ),
     VocabTurn(
       partId: CourseProgressIds.vocabMonumentMeaning,
@@ -119,7 +128,27 @@ class VocabScript {
       successKey: AppStrings.greetingsFeedbackExcellent,
       successAsset: AudioAssets.vocabExcellent(),
       successText: questionSuccessText,
-      matches: matchesMonumentExplanation,
+      redWords: [
+        'huge',
+        'special',
+        'structures',
+        'built',
+        'in',
+        'ancient',
+        'egyptian',
+        'history',
+        'a',
+        'building',
+        'or',
+        'statue',
+        'with',
+        'special',
+        'historical',
+        'importance',
+        'is',
+        'a',
+        'monument',
+      ],
     ),
     VocabTurn(
       partId: CourseProgressIds.vocabStudentQuestion,
@@ -132,111 +161,137 @@ class VocabScript {
       successKey: AppStrings.greetingsFeedbackExcellent,
       successAsset: AudioAssets.vocabExcellent(),
       successText: questionSuccessText,
-      matches: matchesStudentMallQuestion,
+      redWords: [
+        'is',
+        'the',
+        'new',
+        'shopping',
+        'mall',
+        'next',
+        'to',
+        'my',
+        'house',
+        'a',
+        'monument',
+      ],
     ),
     VocabTurn(
       partId: CourseProgressIds.vocabTeacherReply,
       promptKey: AppStrings.vocabVoice9,
       voiceAsset: AudioAssets.vocabVoice(9),
       referenceText:
-          "The teacher thanked the student and pointed out the difference: the mall is big and beautiful, but is it a very old building built by the pharaohs to show our history, like the pyramids?",
+          "The teacher thanked the student for that excellent question, and pointed out the difference saying let's think about it. The mall is very big and beautiful, but is it a very old building built by the pharos to show our history and is very important like the pyramids?",
       pronunciation: false,
       maxAttempts: questionAttempts,
       successKey: AppStrings.greetingsFeedbackExcellent,
       successAsset: AudioAssets.vocabExcellent(),
       successText: questionSuccessText,
-      matches: matchesTeacherReply,
+      redWords: [
+        'thanked',
+        'the',
+        'student',
+        "let's",
+        'think',
+        'about',
+        'it',
+        'the',
+        'mall',
+        'is',
+        'very',
+        'big',
+        'and',
+        'beautiful',
+        'but',
+        'is',
+        'it',
+        'a',
+        'very',
+        'old',
+        'building',
+        'built',
+        'by',
+        'the',
+        'pharos',
+        'to',
+        'show',
+        'our',
+        'history',
+        'and',
+        'is',
+        'very',
+        'important',
+        'like',
+        'the',
+        'pyramids',
+      ],
     ),
     VocabTurn(
       partId: CourseProgressIds.vocabMagnificentMeaning,
       promptKey: AppStrings.vocabVoice10,
       voiceAsset: AudioAssets.vocabVoice(10),
       referenceText:
-          'The teacher defined the word as magnificent means very beautiful and grand, and then he drew a small stick figure on the board and asked if it is magnificent.',
+          'The teacher defined the word as magnificent means very beautiful and grand, and then he drew a small sticky figure on the board and asked students if it is magnificent.',
       pronunciation: false,
       maxAttempts: questionAttempts,
       successKey: AppStrings.greetingsFeedbackExcellent,
       successAsset: AudioAssets.vocabExcellent(),
       successText: questionSuccessText,
-      matches: matchesMagnificentExplanation,
+      redWords: [
+        'magnificent',
+        'means',
+        'very',
+        'beautiful',
+        'and',
+        'grand',
+        'sticky',
+        'figure',
+        'on',
+        'the',
+        'board',
+        'and',
+        'asked',
+        'students',
+        'if',
+        'it',
+        'is',
+        'magnificent',
+      ],
     ),
     VocabTurn(
       partId: CourseProgressIds.vocabMask,
       promptKey: AppStrings.vocabVoice11,
       voiceAsset: AudioAssets.vocabVoice(11),
       referenceText:
-          "What about the golden mask of Tutankhamun, is it magnificent? Students answered yes, because it's beautiful and shiny.",
+          "What about the golden mask of Tot Khaamoon, is it magnificent? Students answered yes teacher, because it's beautiful and shiny.",
       pronunciation: false,
       maxAttempts: questionAttempts,
       successKey: AppStrings.greetingsFeedbackExcellent,
       successAsset: AudioAssets.vocabExcellent(),
       successText: questionSuccessText,
-      matches: matchesMaskQuestion,
+      redWords: [
+        'what',
+        'about',
+        'the',
+        'golden',
+        'mask',
+        'of',
+        'tot',
+        'khaamoon',
+        'is',
+        'it',
+        'magnificent',
+        'students',
+        'answered',
+        'yes',
+        'teacher',
+        'because',
+        "it's",
+        'beautiful',
+        'and',
+        'shiny',
+      ],
     ),
   ];
-}
-
-bool matchesTeachingStages(String heard) {
-  final text = normalizeSpoken(heard);
-  final check = text.contains('concept') ||
-      (text.contains('check') && text.contains('understand'));
-  return text.contains('meaning') && text.contains('definition') && check;
-}
-
-bool matchesMonumentExplanation(String heard) {
-  final text = normalizeSpoken(heard);
-  final historic = text.contains('ancient') ||
-      text.contains('egypt') ||
-      text.contains('history') ||
-      text.contains('huge') ||
-      text.contains('special');
-  final built = text.contains('structure') ||
-      text.contains('building') ||
-      text.contains('statue');
-  return text.contains('picture') &&
-      text.contains('monument') &&
-      historic &&
-      built;
-}
-
-bool matchesStudentMallQuestion(String heard) {
-  final text = normalizeSpoken(heard);
-  final place = text.contains('mall') || text.contains('shopping');
-  final size = text.contains('big') || text.contains('huge') || text.contains('stone');
-  return place && text.contains('monument') && size;
-}
-
-bool matchesTeacherReply(String heard) {
-  final text = normalizeSpoken(heard);
-  final thanks = text.contains('thank');
-  final old = text.contains('pyramid') ||
-      text.contains('pharaoh') ||
-      text.contains('pharo');
-  return thanks && old;
-}
-
-bool matchesMagnificentExplanation(String heard) {
-  final text = normalizeSpoken(heard);
-  final drawing = text.contains('board') ||
-      text.contains('stick') ||
-      text.contains('figure') ||
-      text.contains('drew') ||
-      text.contains('draw');
-  return text.contains('magnificent') &&
-      text.contains('beautiful') &&
-      text.contains('grand') &&
-      drawing;
-}
-
-bool matchesMaskQuestion(String heard) {
-  final text = normalizeSpoken(heard);
-  final object = text.contains('mask') ||
-      text.contains('tut') ||
-      text.contains('golden');
-  final praise = text.contains('beautiful') ||
-      text.contains('shiny') ||
-      text.contains('magnificent');
-  return object && praise;
 }
 
 bool matchesMagnificentBlank(String input) {

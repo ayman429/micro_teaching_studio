@@ -15,9 +15,11 @@ class FluencyInstructionsCard extends StatelessWidget {
   const FluencyInstructionsCard({
     super.key,
     required this.onStartPractice,
+    this.startEnabled = true,
   });
 
   final VoidCallback onStartPractice;
+  final bool startEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +150,7 @@ class FluencyInstructionsCard extends StatelessWidget {
             height: AppSize.inputHeight.h,
             width: double.infinity,
             child: DefaultButtonWidget(
-              onPressed: onStartPractice,
+              onPressed: startEnabled ? onStartPractice : null,
               color: ColorManager.navy,
               radius: AppRadius.r16.r,
               elevation: 0,

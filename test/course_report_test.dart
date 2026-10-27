@@ -76,7 +76,12 @@ void main() {
   test('the workbook lists students, aims, attempts, and cohort rates', () {
     final report = CourseReport.fromDocuments(
       userProgress: const [
-        {'uid': 's1', 'fullName': 'Sara Ahmed', 'userName': 'sara'},
+        {
+          'uid': 's1',
+          'fullName': 'Sara Ahmed',
+          'userName': 'sara',
+          'taskPointIds': ['1-1-passage'],
+        },
       ],
       partProgress: [
         {
@@ -115,6 +120,7 @@ void main() {
     );
 
     expect(report.students.single.aimsAchieved, 1);
+    expect(report.students.single.taskPoints, 1);
     expect(report.students.single.performance.pronunciationAverage, 96);
     expect(report.cohort.studentCount, 1);
     expect(report.cohort.bandCounts[AnalyticsConstants.bandExcellent], 1);

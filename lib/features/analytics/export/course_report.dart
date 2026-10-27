@@ -53,6 +53,7 @@ class StudentReport {
     required this.fullName,
     required this.userName,
     required this.completionPercent,
+    required this.taskPoints,
     required this.performance,
     required this.aimStatuses,
   });
@@ -61,6 +62,7 @@ class StudentReport {
   final String fullName;
   final String userName;
   final double completionPercent;
+  final int taskPoints;
   final PerformanceScore performance;
   final List<AimStatus> aimStatuses;
 
@@ -113,11 +115,13 @@ class CourseReport {
     required List<Map<String, dynamic>> attempts,
   }) {
     final names = <String, ({String fullName, String userName})>{};
+    final pointsByUid = <String, int>{};
     for (final doc in userProgress) {
       final uid = _text(doc['uid']);
       if (uid.isEmpty) continue;
       names[uid] =
           (fullName: _text(doc['fullName']), userName: _text(doc['userName']));
+      pointsByUid[uid] = _stringList(doc['taskPointIds']).length;
     }
     final partsByUid = <String, Map<String, Map<String, dynamic>>>{};
     for (final doc in partProgress) {
@@ -178,7 +182,12 @@ class CourseReport {
     });
     final students = [
       for (final uid in names.keys)
-        _student(uid, names[uid]!, partsByUid[uid] ?? const {}),
+        _student(
+          uid,
+          names[uid]!,
+          partsByUid[uid] ?? const {},
+          pointsByUid[uid] ?? 0,
+        ),
     ]..sort((left, right) => left.fullName.compareTo(right.fullName));
     return CourseReport(
       students: students,
@@ -191,12 +200,14 @@ class CourseReport {
     String uid,
     ({String fullName, String userName}) name,
     Map<String, Map<String, dynamic>> parts,
+    int taskPoints,
   ) {
     return StudentReport(
       uid: uid,
       fullName: name.fullName,
       userName: name.userName,
       completionPercent: CoursePerformance.completionPercent(parts),
+      taskPoints: taskPoints,
       performance: CoursePerformance.fromParts(parts),
       aimStatuses: [
         for (final aim in CourseAims.catalog) CourseAims.statusFor(aim, parts),
@@ -270,6 +281,14 @@ double _mean(List<double> values) {
 }
 
 String _text(Object? value) => value is String ? value.trim() : '';
+
+List<String> _stringList(Object? value) {
+  if (value is! List) return const [];
+  return [
+    for (final item in value)
+      if (item != null) item.toString(),
+  ];
+}
 
 int _int(Object? value) => value is num ? value.toInt() : 0;
 

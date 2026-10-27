@@ -16,9 +16,14 @@ import 'package:micro_teaching_studio/features/course_shell/widgets/course_svg_i
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_copy.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
-Future<void> playSessionInstructions(int module, int session) {
+Future<void> playSessionInstructions(
+  int module,
+  int session, {
+  void Function()? onFinished,
+}) {
   return instance<CourseAudioCubit>().playSequence(
     AudioAssets.sessionInstructionsSequence(module, session),
+    onFinished: onFinished,
   );
 }
 
@@ -29,12 +34,14 @@ class SessionInstructionsPanel extends StatefulWidget {
     required this.session,
     required this.sessionName,
     required this.onStart,
+    this.startEnabled = true,
   });
 
   final int module;
   final int session;
   final String sessionName;
   final VoidCallback onStart;
+  final bool startEnabled;
 
   @override
   State<SessionInstructionsPanel> createState() =>
@@ -72,6 +79,7 @@ class _SessionInstructionsPanelState extends State<SessionInstructionsPanel> {
             module: widget.module,
             session: widget.session,
             sessionName: widget.sessionName,
+            startEnabled: widget.startEnabled,
             copy: copy,
             objectivesAudio: AudioAssets.sessionInstructionsObjectives(
               widget.module,
@@ -94,6 +102,7 @@ class _SessionInstructionsCard extends StatelessWidget {
     required this.module,
     required this.session,
     required this.sessionName,
+    required this.startEnabled,
     required this.copy,
     required this.objectivesAudio,
     required this.howToApplyAudio,
@@ -103,6 +112,7 @@ class _SessionInstructionsCard extends StatelessWidget {
   final int module;
   final int session;
   final String sessionName;
+  final bool startEnabled;
   final SessionInstructionsCopy copy;
   final String objectivesAudio;
   final String howToApplyAudio;
@@ -270,7 +280,7 @@ class _SessionInstructionsCard extends StatelessWidget {
             height: AppSize.inputHeight.h,
             width: double.infinity,
             child: DefaultButtonWidget(
-              onPressed: onStart,
+              onPressed: startEnabled ? onStart : null,
               color: ColorManager.navy,
               radius: AppRadius.r16.r,
               elevation: 0,

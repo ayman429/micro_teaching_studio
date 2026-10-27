@@ -9,13 +9,19 @@ import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/common/widgets/default_button_widget.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/session_end_bar.dart';
 import 'package:micro_teaching_studio/features/quiz/cubit/quiz_cubit.dart';
 import 'package:micro_teaching_studio/features/quiz/cubit/quiz_state.dart';
 import 'package:micro_teaching_studio/features/quiz/quiz_script.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
 class QuizCard extends StatelessWidget {
-  const QuizCard({super.key});
+  const QuizCard({
+    super.key,
+    required this.onRestudy,
+  });
+
+  final VoidCallback onRestudy;
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +133,12 @@ class QuizCard extends StatelessWidget {
                         loadingColor: ColorManager.white,
                       ),
                     ),
+                    if (state.settled)
+                      SessionEndBar(
+                        module: 2,
+                        session: 1,
+                        onRestudy: onRestudy,
+                      ),
                   ],
                 ),
               ),

@@ -155,8 +155,9 @@ class CourseAims {
     if (pronunciationPart(type) || type.isEmpty && _hasBand(part)) {
       return _band(part) == AnalyticsConstants.bandExcellent;
     }
-    return (part['contentOutcome'] as String?)?.trim() ==
-        AnalyticsConstants.contentCorrect;
+    final outcome = (part['contentOutcome'] as String?)?.trim() ?? '';
+    return outcome == AnalyticsConstants.contentCorrect ||
+        outcome == AnalyticsConstants.contentNeedsImprovement;
   }
 
   static bool started(Map<String, dynamic>? part) {

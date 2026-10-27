@@ -104,6 +104,9 @@ class ColorManager {
   static const Color mintSoft = Color(0xffECFDF5);
   static const Color mintBorder = Color(0xffA7F3D0);
   static const Color emerald = Color(0xff047857);
+  static const Color skySoft = Color(0xffEFF6FF);
+  static const Color skyBorder = Color(0xffBFDBFE);
+  static const Color skyDeep = Color(0xff1D4ED8);
   static const Color amberWash = Color(0xffFFFBEB);
   static const Color amberBorder = Color(0xffFDE68A);
   static const Color amberDeep = Color(0xffB45309);

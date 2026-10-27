@@ -70,8 +70,8 @@ class Assets {
       "assets/images/ai_twin_head.jpg";
   static const String assetsIconsAbc = "assets/images/abc.png";
   static const String assetsIconsAi = "assets/images/ai.png";
-  static const String assetsIconsModuleSpeaker =
-      "assets/icons/module_speaker.svg";
+  static const String assetsIconsModuleLayers =
+      "assets/icons/module_layers.svg";
   static const String assetsIconsModuleUsers = "assets/icons/module_users.svg";
   static const String assetsIconsModuleBook = "assets/icons/module_book.svg";
 

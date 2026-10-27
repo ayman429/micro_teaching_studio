@@ -17,6 +17,9 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
   String? _activeAsset;
   List<String> _sequence = const [];
   var _sequenceIndex = 0;
+  var _sequenceToken = 0;
+  void Function()? _onSequenceFinished;
+  void Function()? _onClipFinished;
 
   Future<void> toggle(String asset) async {
     if (asset.isEmpty) return;
@@ -27,24 +30,37 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
     await play(asset);
   }
 
-  Future<void> playSequence(List<String> assets) async {
+  Future<void> playSequence(
+    List<String> assets, {
+    void Function()? onFinished,
+  }) async {
+    _sequenceToken++;
+    final token = _sequenceToken;
+    _onSequenceFinished = onFinished;
+    _onClipFinished = null;
     _sequence = [
       for (final asset in assets)
         if (asset.isNotEmpty) asset,
     ];
     _sequenceIndex = 0;
-    if (_sequence.isEmpty) return;
+    if (_sequence.isEmpty) {
+      _finishSequence(token);
+      return;
+    }
     await play(_sequence.first);
   }
 
-  Future<void> play(String asset) async {
+  Future<void> play(String asset, {void Function()? onFinished}) async {
     if (asset.isEmpty) return;
     final inSequence = _sequence.isNotEmpty &&
         _sequenceIndex < _sequence.length &&
         _sequence[_sequenceIndex] == asset;
     if (!inSequence) {
+      _sequenceToken++;
+      _onSequenceFinished = null;
       _sequence = const [];
       _sequenceIndex = 0;
+      _onClipFinished = onFinished;
     }
     _activeAsset = asset;
     emit(
@@ -73,6 +89,9 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
       await _player.play();
     } catch (error, stack) {
       log('course audio: $error', stackTrace: stack);
+      _sequenceToken++;
+      _onSequenceFinished = null;
+      _onClipFinished = null;
       _sequence = const [];
       _sequenceIndex = 0;
       _activeAsset = null;
@@ -105,6 +124,9 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
   }
 
   Future<void> stop() async {
+    _sequenceToken++;
+    _onSequenceFinished = null;
+    _onClipFinished = null;
     _sequence = const [];
     _sequenceIndex = 0;
     _activeAsset = null;
@@ -123,15 +145,31 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
     if (_sequence.isNotEmpty &&
         _sequenceIndex < _sequence.length &&
         finished == _sequence[_sequenceIndex]) {
+      final token = _sequenceToken;
       _sequenceIndex++;
       if (_sequenceIndex < _sequence.length) {
         unawaited(play(_sequence[_sequenceIndex]));
         return;
       }
+      _sequence = const [];
+      _sequenceIndex = 0;
+      if (!isClosed) emit(const CourseAudioState());
+      _finishSequence(token);
+      return;
     }
     _sequence = const [];
     _sequenceIndex = 0;
+    final clipDone = _onClipFinished;
+    _onClipFinished = null;
     if (!isClosed) emit(const CourseAudioState());
+    clipDone?.call();
+  }
+
+  void _finishSequence(int token) {
+    if (token != _sequenceToken) return;
+    final done = _onSequenceFinished;
+    _onSequenceFinished = null;
+    done?.call();
   }
 
   @override

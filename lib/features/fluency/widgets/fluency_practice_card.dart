@@ -21,11 +21,11 @@ class FluencyPracticeCard extends StatelessWidget {
   const FluencyPracticeCard({
     super.key,
     required this.onSpeak,
-    required this.onNext,
+    this.onNext,
   });
 
   final VoidCallback onSpeak;
-  final VoidCallback onNext;
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {

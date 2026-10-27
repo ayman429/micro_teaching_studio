@@ -1,42 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:micro_teaching_studio/features/analytics/analytics_constants.dart';
 import 'package:micro_teaching_studio/features/greetings/greetings_resume.dart';
-import 'package:micro_teaching_studio/features/greetings/greetings_script.dart';
 
 void main() {
-  test('noise answer accepts the expected idea', () {
-    expect(
-      matchesNoise('Yes, students are making a lot of noise?'),
-      isTrue,
-    );
-    expect(matchesNoise('Yes, the students make noise'), isTrue);
-    expect(matchesNoise('Yes, students are not making noise'), isFalse);
-    expect(matchesNoise('The class is quiet'), isFalse);
-  });
-
-  test('TPR answer needs the method and the name', () {
-    expect(
-      matchesTpr(
-        "Yes, the teacher could manage the students' behaviours by asking them to respond to physical actions. This is called TPR (Total Physical Response).",
-      ),
-      isTrue,
-    );
-    expect(matchesTpr('The teacher used TPR'), isFalse);
-  });
-
-  test('expressions answer needs most of the classroom lines', () {
-    expect(
-      matchesExpressions(
-        'Clap once if you can hear me. Clap twice if you can hear me. Good morning my students. Everyone hands up, hands down and sit down please. Eyes on me. Books out class. Open page twenty-four. Finger on line one. Show me your fingers.',
-      ),
-      isTrue,
-    );
-    expect(
-      matchesExpressions('Clap once. Good morning. Hands up.'),
-      isFalse,
-    );
-  });
-
   test('resume stays on the open question and skips settled ones', () {
     const open = GreetingsPartSnapshot(
       reached: true,
@@ -49,6 +15,12 @@ void main() {
       attemptCount: 3,
       locked: true,
       contentOutcome: AnalyticsConstants.contentIncorrect,
+    );
+    const improved = GreetingsPartSnapshot(
+      reached: true,
+      attemptCount: 1,
+      locked: true,
+      contentOutcome: AnalyticsConstants.contentNeedsImprovement,
     );
     const untouched = GreetingsPartSnapshot(
       reached: false,
@@ -67,8 +39,9 @@ void main() {
       1,
     );
     expect(
-      GreetingsResumePlan.resumeIndex(const [settled, settled, settled]),
+      GreetingsResumePlan.resumeIndex(const [improved, settled, settled]),
       3,
     );
+    expect(improved.answeredCorrectly, isTrue);
   });
 }

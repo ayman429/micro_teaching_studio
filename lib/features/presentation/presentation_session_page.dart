@@ -11,6 +11,8 @@ import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/analytics/data/analytics_repository.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/session_score_line.dart';
+import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_cubit.dart';
@@ -23,12 +25,32 @@ import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pro
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 
-class PresentationSessionPage extends StatelessWidget {
+class PresentationSessionPage extends StatefulWidget {
   const PresentationSessionPage({super.key});
+
+  @override
+  State<PresentationSessionPage> createState() =>
+      _PresentationSessionPageState();
+}
+
+class _PresentationSessionPageState extends State<PresentationSessionPage> {
+  var _generation = 0;
+
+  Future<void> _restudy() async {
+    await CourseFlow.prepareRestudy(
+      context,
+      module: 3,
+      session: 3,
+      videoAsset: PresentationScript.plan.videoAsset,
+    );
+    if (!mounted) return;
+    setState(() => _generation++);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
+      key: ValueKey(_generation),
       providers: [
         BlocProvider(
           create: (_) => GreetingsCubit(
@@ -48,7 +70,10 @@ class PresentationSessionPage extends StatelessWidget {
           )..start(),
         ),
       ],
-      child: const _PresentationSessionBody(),
+      child: _PresentationSessionBody(
+        key: ValueKey(_generation),
+        onRestudy: _restudy,
+      ),
     );
   }
 }
@@ -58,7 +83,9 @@ class PresentationSessionView extends PresentationSessionPage {
 }
 
 class _PresentationSessionBody extends StatefulWidget {
-  const _PresentationSessionBody();
+  const _PresentationSessionBody({super.key, required this.onRestudy});
+
+  final Future<void> Function() onRestudy;
 
   @override
   State<_PresentationSessionBody> createState() =>
@@ -68,6 +95,21 @@ class _PresentationSessionBody extends StatefulWidget {
 class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
   var _tab = 0;
   var _lessonStarted = false;
+  var _instructionsReady = false;
+
+  void _playInstructions() {
+    setState(() => _instructionsReady = false);
+    unawaited(
+      playSessionInstructions(
+        3,
+        3,
+        onFinished: () {
+          if (!mounted) return;
+          setState(() => _instructionsReady = true);
+        },
+      ),
+    );
+  }
   var _switching = false;
   var _routeCurrent = true;
 
@@ -76,7 +118,7 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _tab != 0) return;
-      unawaited(playSessionInstructions(3, 3));
+      _playInstructions();
     });
   }
 
@@ -101,7 +143,11 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
       title: AppStrings.sessionPresentContinuousPresentation.tr(),
       showSkip: false,
       bodyGradient: ColorManager.gradientFluencySurface,
-      body: Column(
+      body: BlocBuilder<GreetingsCubit, GreetingsState>(
+        buildWhen: (previous, current) => previous.phase != current.phase,
+        builder: (context, lesson) {
+          final lessonDone = lesson.phase == GreetingsPhase.done;
+          return Column(
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(
@@ -110,18 +156,30 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
               AppPadding.p16.w,
               0,
             ),
-            child: CourseSegmentedTabs(
-              labels: [
-                AppStrings.instructionsTab.tr(),
-                AppStrings.presentationTab.tr(),
-                AppStrings.quizTab.tr(),
+            child: Column(
+              children: [
+                const SessionScoreLine(module: 3, session: 3),
+                CourseSegmentedTabs(
+                  labels: [
+                    AppStrings.instructionsTab.tr(),
+                    AppStrings.presentationTab.tr(),
+                    AppStrings.quizTab.tr(),
+                  ],
+                  selectedIndex: _tab,
+                  enabled: [
+                    true,
+                    _instructionsReady,
+                    _instructionsReady && lessonDone,
+                  ],
+                  onSelected: _selectTab,
+                ),
               ],
-              selectedIndex: _tab,
-              onSelected: _selectTab,
             ),
           ),
           Expanded(child: _panel()),
         ],
+      );
+        },
       ),
     );
   }
@@ -135,7 +193,7 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
     }
     if (_tab == 2) {
       return PresentationQuizCard(
-        onCourseComplete: () => CourseFlow.next(context),
+        onRestudy: () => unawaited(widget.onRestudy()),
       );
     }
     return ListView(
@@ -150,6 +208,7 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
           module: 3,
           session: 3,
           sessionName: AppStrings.sessionPresentContinuousPresentation.tr(),
+          startEnabled: _instructionsReady,
           onStart: () => unawaited(_selectTab(1)),
         ),
       ],
@@ -157,6 +216,10 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
   }
 
   Future<void> _selectTab(int index) async {
+    if (index > 0 && !_instructionsReady) return;
+    final lessonDone =
+        context.read<GreetingsCubit>().state.phase == GreetingsPhase.done;
+    if (index > 1 && !lessonDone) return;
     if (_switching || index == _tab || !mounted) return;
     _switching = true;
     final previous = _tab;
@@ -176,7 +239,7 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
         }
       }
       if (index == 2) await quiz.onTabShown();
-      if (index == 0) await playSessionInstructions(3, 3);
+      if (index == 0) _playInstructions();
     } finally {
       _switching = false;
     }

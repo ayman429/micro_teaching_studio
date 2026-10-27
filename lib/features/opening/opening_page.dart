@@ -36,7 +36,7 @@ class OpeningPage extends StatelessWidget {
             SizedBox(height: AppPadding.p16.h),
             OpeningActions(
               onHelp: () => CourseScaffold.openHelp(context),
-              onSkip: () => CourseFlow.next(context),
+              onContinue: () => CourseFlow.next(context),
             ),
           ],
         ),

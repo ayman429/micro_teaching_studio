@@ -119,6 +119,7 @@ class _VocabPageState extends State<VocabPage> {
                                   key: const ValueKey('vocab-video'),
                                   asset: AudioAssets.vocabVideo(),
                                   introLabel: AppStrings.greetingsVideoIntro,
+                                  limitPlays: true,
                                   onCompleted: () => context
                                       .read<VocabCubit>()
                                       .onVideoCompleted(),
@@ -128,11 +129,13 @@ class _VocabPageState extends State<VocabPage> {
                                     final intro =
                                         phase == GreetingsPhase.intro ||
                                             phase == GreetingsPhase.watching;
-                                    if (!intro) {
-                                      _videoHandle.pause();
+                                    if (intro) {
+                                      unawaited(cubit.onVideoStarted());
                                       return;
                                     }
-                                    unawaited(cubit.onVideoStarted());
+                                    if (!cubit.canReplayVideo) {
+                                      _videoHandle.pause();
+                                    }
                                   },
                                   handle: _videoHandle,
                                 ),

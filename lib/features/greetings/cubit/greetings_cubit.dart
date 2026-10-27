@@ -4,16 +4,19 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
 import 'package:micro_teaching_studio/common/resources/strings_manager.dart';
 import 'package:micro_teaching_studio/features/analytics/analytics_constants.dart';
 import 'package:micro_teaching_studio/features/analytics/data/analytics_repository.dart';
 import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
 import 'package:micro_teaching_studio/features/analytics/models/lesson_analytics.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_state.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
 import 'package:micro_teaching_studio/features/greetings/greetings_resume.dart';
 import 'package:micro_teaching_studio/features/greetings/greetings_script.dart';
+import 'package:micro_teaching_studio/features/greetings/red_word_grade.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pronunciation_engine.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
@@ -44,6 +47,12 @@ class GreetingsCubit extends Cubit<GreetingsState> {
 
   SpokenLessonPlan get plan => _plan;
 
+  /// Later full plays are for review and must not skip the current prompt.
+  bool get canReplayVideo =>
+      _videoFinished &&
+      _audioCue == _AudioCue.none &&
+      state.phase != GreetingsPhase.recording;
+
   StreamSubscription<CourseAudioState>? _audioSub;
   var _started = false;
   var _busy = false;
@@ -61,6 +70,21 @@ class GreetingsCubit extends Cubit<GreetingsState> {
     if (_started) return;
     _started = true;
     _audioSub = _audio.stream.listen(_onAudio);
+    final replayKey = _sessionKey;
+    if (replayKey != null && LessonReplay.consume(replayKey)) {
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          phase: GreetingsPhase.intro,
+          videoVisible: true,
+          messages: [
+            _twin(_plan.introKey),
+          ],
+        ),
+      );
+      await _playCue(_plan.introAsset, _AudioCue.intro);
+      return;
+    }
     try {
       if (await _restore()) return;
     } catch (error, stack) {
@@ -258,21 +282,28 @@ class GreetingsCubit extends Cubit<GreetingsState> {
         return;
       }
       final heard = result.heardText!.trim();
-      final matched = question.matches(heard);
+      final verdict = gradeRedWords(
+        redWords: question.redWords,
+        words: result.words,
+      );
+      final accepted = verdict.accepted;
+      final improve = verdict.grade == RedWordGrade.needsImprovement;
       final attempts = state.attemptCount + 1;
       final exhausted =
-          !matched && attempts >= PronunciationConstants.maxAttempts;
+          !accepted && attempts >= PronunciationConstants.maxAttempts;
       final last = state.questionIndex >= _plan.questions.length - 1;
-      _pending = matched
+      _pending = accepted
           ? (last ? _Pending.reflect : _Pending.advance)
           : (exhausted
               ? (last ? _Pending.finish : _Pending.advance)
               : _Pending.retry);
-      final feedbackKey = matched
-          ? question.successKey
+      final feedbackKey = accepted
+          ? (improve
+              ? AppStrings.resultNeedsImprovement
+              : question.successKey)
           : (exhausted ? _plan.exhaustedKey : _plan.retryKey);
-      final tone = matched
-          ? GreetingsTone.correct
+      final tone = accepted
+          ? (improve ? GreetingsTone.improve : GreetingsTone.correct)
           : (exhausted ? GreetingsTone.exhausted : GreetingsTone.retry);
       emit(
         state.copyWith(
@@ -291,19 +322,24 @@ class GreetingsCubit extends Cubit<GreetingsState> {
           question: question,
           result: result,
           attemptNumber: attempts,
-          matched: matched,
+          grade: verdict.grade,
           exhausted: exhausted,
           startedAt: startedAt,
           language: config.language,
           region: config.region,
         ),
       );
-      if (matched || exhausted) {
+      if (accepted) {
+        unawaited(_progress.awardPoint(question.partId));
+      }
+      if (accepted || exhausted) {
         unawaited(_progress.completePart(question.partId));
       }
       await _playCue(
-        matched
-            ? question.successAsset
+        accepted
+            ? (improve
+                ? AudioAssets.needsImprovement()
+                : question.successAsset)
             : (exhausted ? _plan.exhaustedAsset : _plan.retryAsset),
         _AudioCue.feedback,
       );
@@ -354,7 +390,7 @@ class GreetingsCubit extends Cubit<GreetingsState> {
     required GreetingsQuestion question,
     required PronunciationResult result,
     required int attemptNumber,
-    required bool matched,
+    required RedWordGrade grade,
     required bool exhausted,
     required DateTime startedAt,
     required String language,
@@ -362,7 +398,7 @@ class GreetingsCubit extends Cubit<GreetingsState> {
   }) async {
     final lesson = _lessonFor(
       question: question,
-      matched: matched,
+      grade: grade,
       exhausted: exhausted,
     );
     try {
@@ -645,6 +681,8 @@ class GreetingsCubit extends Cubit<GreetingsState> {
     switch (outcome) {
       case AnalyticsConstants.contentCorrect:
         return question.successKey;
+      case AnalyticsConstants.contentNeedsImprovement:
+        return AppStrings.resultNeedsImprovement;
       case AnalyticsConstants.contentIncorrect:
         return _plan.exhaustedKey;
       default:
@@ -656,6 +694,8 @@ class GreetingsCubit extends Cubit<GreetingsState> {
     switch (outcome) {
       case AnalyticsConstants.contentCorrect:
         return GreetingsTone.correct;
+      case AnalyticsConstants.contentNeedsImprovement:
+        return GreetingsTone.improve;
       case AnalyticsConstants.contentIncorrect:
         return GreetingsTone.exhausted;
       default:
@@ -678,30 +718,45 @@ class GreetingsCubit extends Cubit<GreetingsState> {
     );
   }
 
+  String? get _sessionKey {
+    if (_plan.questions.isEmpty) return null;
+    final bits = _plan.questions.first.partId.split('-');
+    if (bits.length < 2) return null;
+    return '${bits[0]}-${bits[1]}';
+  }
+
   LessonAnalytics _lessonFor({
     required GreetingsQuestion question,
-    required bool matched,
+    required RedWordGrade grade,
     required bool exhausted,
   }) {
-    if (matched) {
-      return LessonAnalytics(
-        contentOutcome: AnalyticsConstants.contentCorrect,
-        contentMatched: true,
-        lessonFeedback: question.successText,
-      );
+    switch (grade) {
+      case RedWordGrade.excellent:
+        return LessonAnalytics(
+          contentOutcome: AnalyticsConstants.contentCorrect,
+          contentMatched: true,
+          lessonFeedback: question.successText,
+        );
+      case RedWordGrade.needsImprovement:
+        return const LessonAnalytics(
+          contentOutcome: AnalyticsConstants.contentNeedsImprovement,
+          contentMatched: true,
+          lessonFeedback: 'Needs improvement',
+        );
+      case RedWordGrade.retry:
+        if (exhausted) {
+          return LessonAnalytics(
+            contentOutcome: AnalyticsConstants.contentIncorrect,
+            contentMatched: false,
+            lessonFeedback: _plan.exhaustedText,
+          );
+        }
+        return LessonAnalytics(
+          contentOutcome: AnalyticsConstants.contentRetry,
+          contentMatched: false,
+          lessonFeedback: _plan.retryText,
+        );
     }
-    if (exhausted) {
-      return LessonAnalytics(
-        contentOutcome: AnalyticsConstants.contentIncorrect,
-        contentMatched: false,
-        lessonFeedback: _plan.exhaustedText,
-      );
-    }
-    return LessonAnalytics(
-      contentOutcome: AnalyticsConstants.contentRetry,
-      contentMatched: false,
-      lessonFeedback: _plan.retryText,
-    );
   }
 
   GreetingsMessage _twin(

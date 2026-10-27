@@ -10,15 +10,16 @@ import 'package:micro_teaching_studio/common/resources/styles_manager.dart';
 import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/common/widgets/default_button_widget.dart';
 import 'package:micro_teaching_studio/features/classroom/cubit/classroom_quiz_state.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/session_end_bar.dart';
 import 'package:micro_teaching_studio/features/presentation/cubit/presentation_quiz_cubit.dart';
 import 'package:micro_teaching_studio/features/presentation/presentation_script.dart';
 import 'package:micro_teaching_studio/features/quiz/quiz_script.dart';
 import 'package:micro_teaching_studio/images_urls/assets.dart';
 
 class PresentationQuizCard extends StatelessWidget {
-  const PresentationQuizCard({super.key, this.onCourseComplete});
+  const PresentationQuizCard({super.key, required this.onRestudy});
 
-  final VoidCallback? onCourseComplete;
+  final VoidCallback onRestudy;
 
   @override
   Widget build(BuildContext context) {
@@ -117,8 +118,10 @@ class PresentationQuizCard extends StatelessWidget {
                       width: double.infinity,
                       height: AppSize.s48.h,
                       child: DefaultButtonWidget(
-                        onPressed: _primaryAction(context, state),
-                        text: _primaryLabel(state),
+                        onPressed: state.canSubmit
+                            ? () => context.read<PresentationQuizCubit>().submit()
+                            : null,
+                        text: AppStrings.quizSubmit.tr(),
                         isLoading: state.submitting,
                         color: ColorManager.navy,
                         textColor: ColorManager.white,
@@ -129,6 +132,12 @@ class PresentationQuizCard extends StatelessWidget {
                         loadingColor: ColorManager.white,
                       ),
                     ),
+                    if (state.settled)
+                      SessionEndBar(
+                        module: 3,
+                        session: 3,
+                        onRestudy: onRestudy,
+                      ),
                   ],
                 ),
               ),
@@ -137,23 +146,6 @@ class PresentationQuizCard extends StatelessWidget {
         },
       ),
     );
-  }
-
-  bool _showCourseNext(ClassroomQuizState state) {
-    return onCourseComplete != null &&
-        state.settled &&
-        state.tone == QuizTone.correct;
-  }
-
-  VoidCallback? _primaryAction(BuildContext context, ClassroomQuizState state) {
-    if (_showCourseNext(state)) return onCourseComplete;
-    if (!state.canSubmit) return null;
-    return () => context.read<PresentationQuizCubit>().submit();
-  }
-
-  String _primaryLabel(ClassroomQuizState state) {
-    if (_showCourseNext(state)) return AppStrings.next.tr();
-    return AppStrings.quizSubmit.tr();
   }
 
   String _attempts(ClassroomQuizState state) {

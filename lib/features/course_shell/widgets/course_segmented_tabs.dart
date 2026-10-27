@@ -10,27 +10,33 @@ class CourseSegmentedTabs extends StatelessWidget {
     required this.labels,
     required this.selectedIndex,
     required this.onSelected,
+    this.enabled,
   });
 
   final List<String> labels;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final List<bool>? enabled;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: List.generate(labels.length, (index) {
         final isSelected = index == selectedIndex;
+        final isEnabled = enabled == null ||
+            (index < enabled!.length && enabled![index]);
         return Expanded(
           child: Padding(
             padding: EdgeInsets.only(
               left: index == 0 ? 0 : AppPadding.p8.w,
             ),
-            child: Material(
+            child: Opacity(
+              opacity: isEnabled ? 1 : 0.45,
+              child: Material(
               color: isSelected ? ColorManager.navy : ColorManager.white,
               borderRadius: BorderRadius.circular(AppRadius.rCapsule.r),
               child: InkWell(
-                onTap: () => onSelected(index),
+                onTap: isEnabled ? () => onSelected(index) : null,
                 borderRadius: BorderRadius.circular(AppRadius.rCapsule.r),
                 child: Container(
                   height: AppSize.s40.h,
@@ -54,6 +60,7 @@ class CourseSegmentedTabs extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
             ),
           ),
         );

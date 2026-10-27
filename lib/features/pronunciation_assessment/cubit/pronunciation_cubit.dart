@@ -196,6 +196,9 @@ class PronunciationCubit extends Cubit<PronunciationState> {
         language: language,
         region: region,
       );
+      if (scored.band == PronunciationBand.excellent) {
+        await _progress.awardPoint(part.partId);
+      }
       if (scored.locked) {
         await _progress.completePart(part.partId);
       }

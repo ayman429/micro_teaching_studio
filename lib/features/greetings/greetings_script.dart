@@ -11,7 +11,7 @@ class GreetingsQuestion {
     required this.successKey,
     required this.successAsset,
     required this.successText,
-    required this.matches,
+    required this.redWords,
   });
 
   final String partId;
@@ -21,7 +21,7 @@ class GreetingsQuestion {
   final String successKey;
   final String successAsset;
   final String successText;
-  final bool Function(String heard) matches;
+  final List<String> redWords;
 }
 
 class SpokenLessonPlan {
@@ -87,7 +87,7 @@ class GreetingsScript {
       successKey: AppStrings.greetingsFeedbackExcellent,
       successAsset: AudioAssets.greetingsExcellent(),
       successText: 'Excellent.',
-      matches: matchesNoise,
+      redWords: ['making', 'noise'],
     ),
     GreetingsQuestion(
       partId: CourseProgressIds.greetingsTpr,
@@ -98,7 +98,18 @@ class GreetingsScript {
       successKey: AppStrings.greetingsFeedbackExcellent,
       successAsset: AudioAssets.greetingsExcellent(),
       successText: 'Excellent.',
-      matches: matchesTpr,
+      redWords: [
+        'yes',
+        'manage',
+        'respond',
+        'to',
+        'physical',
+        'actions',
+        'tpr',
+        'total',
+        'physical',
+        'response',
+      ],
     ),
     GreetingsQuestion(
       partId: CourseProgressIds.greetingsExpressions,
@@ -110,7 +121,36 @@ class GreetingsScript {
       successAsset: AudioAssets.greetingsExcellentRules(),
       successText:
           'Excellent! This is one of the golden rules we use to manage students and maintain control of the classroom: never speak over a crowd. Use call-and-response claps to break the noise barrier first.',
-      matches: matchesExpressions,
+      redWords: [
+        'clap',
+        'once',
+        'if',
+        'you',
+        'can',
+        'hear',
+        'me',
+        'clap',
+        'twice',
+        'if',
+        'you',
+        'can',
+        'hear',
+        'me',
+        'hands',
+        'up',
+        'hands',
+        'down',
+        'eyes',
+        'on',
+        'me',
+        'books',
+        'out',
+        'class',
+        'open',
+        'page',
+        'twenty',
+        'four',
+      ],
     ),
   ];
 }
@@ -123,45 +163,3 @@ String normalizeSpoken(String input) {
   return text;
 }
 
-bool matchesNoise(String heard) {
-  final text = normalizeSpoken(heard);
-  final affirmed = text.contains('yes') &&
-      text.contains('students') &&
-      text.contains('noise') &&
-      (text.contains('make') || text.contains('lot'));
-  final denied = text.contains('not') ||
-      text.contains('no noise') ||
-      text.contains('quiet') ||
-      text.contains('arent') ||
-      text.contains('dont');
-  return affirmed && !denied;
-}
-
-bool matchesTpr(String heard) {
-  final text = normalizeSpoken(heard);
-  final hasTpr =
-      text.contains('tpr') || text.contains('total physical response');
-  final hasManage = text.contains('manage') || text.contains('behavior');
-  return hasTpr && hasManage && text.contains('physical');
-}
-
-bool matchesExpressions(String heard) {
-  final text = normalizeSpoken(heard);
-  final checks = <bool>[
-    text.contains('clap once'),
-    text.contains('clap twice'),
-    text.contains('good morning'),
-    text.contains('hands up'),
-    text.contains('hands down') || text.contains('sit down'),
-    text.contains('eyes on me'),
-    text.contains('books out') ||
-        text.contains('page 24') ||
-        text.contains('twenty four'),
-    text.contains('finger on line') || text.contains('show me your fingers'),
-  ];
-  var hits = 0;
-  for (final check in checks) {
-    if (check) hits++;
-  }
-  return hits >= 7;
-}

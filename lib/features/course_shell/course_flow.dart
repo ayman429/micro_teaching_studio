@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:micro_teaching_studio/common/resources/app_router.dart';
+import 'package:micro_teaching_studio/app/imports.dart';
+import 'package:micro_teaching_studio/features/analytics/data/analytics_repository.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_cubit.dart';
+import 'package:micro_teaching_studio/features/course_video/cubit/course_video_cubit.dart';
 import 'package:micro_teaching_studio/features/auth/cubit/auth_state.dart';
+import 'package:micro_teaching_studio/common/resources/app_router.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 
 class CourseStep {
   const CourseStep({
@@ -177,6 +182,37 @@ class CourseFlow {
     final step = stepForSession(module, session);
     if (step == null) return;
     context.go(step.route);
+  }
+
+  /// Marks [module]/[session] finished, then opens the first unfinished
+  /// session in course order, or the course-complete screen when none remain.
+  static void openAfterSession(BuildContext context, int module, int session) {
+    final progress = context.read<CourseProgressCubit>();
+    progress.finishSession(module, session);
+    final next =
+        CourseSessions.firstUnfinished(progress.state.finishedSessions);
+    if (next == null) {
+      context.go(AppRouters.courseCompleteView);
+      return;
+    }
+    openSession(context, next.module, next.session);
+  }
+
+  static Future<void> prepareRestudy(
+    BuildContext context, {
+    required int module,
+    required int session,
+    String? videoAsset,
+  }) async {
+    final progress = context.read<CourseProgressCubit>();
+    await progress.markRestudied(module, session);
+    await instance<AnalyticsRepository>().reopenParts(
+      CourseSessions.missedPartIds(progress.state.pointIds, module, session),
+    );
+    if (videoAsset != null && videoAsset.isNotEmpty) {
+      CourseVideoPlays.reset(videoAsset);
+    }
+    LessonReplay.request(module, session);
   }
 
   static int _indexOf(CourseStep? step) {

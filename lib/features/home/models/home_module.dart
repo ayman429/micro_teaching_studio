@@ -24,7 +24,7 @@ class HomeModule {
   static const List<HomeModule> catalog = [
     HomeModule(
       number: 1,
-      iconAsset: Assets.assetsIconsModuleSpeaker,
+      iconAsset: Assets.assetsIconsModuleLayers,
       iconBackground: ColorManager.actionBlue,
       progress: 0,
       titleKey: AppStrings.module1Title,

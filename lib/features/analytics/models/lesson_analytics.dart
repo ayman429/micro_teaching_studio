@@ -15,6 +15,7 @@ class LessonAnalytics {
 
   bool get settles =>
       contentOutcome == AnalyticsConstants.contentCorrect ||
+      contentOutcome == AnalyticsConstants.contentNeedsImprovement ||
       contentOutcome == AnalyticsConstants.contentIncorrect;
 
   bool get noResponse => contentOutcome == AnalyticsConstants.contentNoResponse;
