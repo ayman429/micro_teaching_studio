@@ -11,7 +11,6 @@ import 'package:micro_teaching_studio/features/analytics/data/analytics_reposito
 import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
 import 'package:micro_teaching_studio/features/analytics/models/lesson_analytics.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
-import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_state.dart';
 import 'package:micro_teaching_studio/features/greetings/cubit/greetings_state.dart';
 import 'package:micro_teaching_studio/features/greetings/greetings_resume.dart';
@@ -71,7 +70,8 @@ class GreetingsCubit extends Cubit<GreetingsState> {
     _started = true;
     _audioSub = _audio.stream.listen(_onAudio);
     final replayKey = _sessionKey;
-    if (replayKey != null && LessonReplay.consume(replayKey)) {
+    if (replayKey != null &&
+        await _progress.consumeLessonReplay(replayKey)) {
       if (isClosed) return;
       emit(
         state.copyWith(
@@ -637,10 +637,17 @@ class GreetingsCubit extends Cubit<GreetingsState> {
       return true;
     }
     for (var cursor = 0; cursor < index; cursor++) {
-      messages.addAll(_savedTurns(_plan.questions[cursor]));
+      final prior = _plan.questions[cursor];
+      if (_hasSavedDialogue(prior.partId)) {
+        messages.addAll(_savedTurns(prior));
+      }
     }
     final question = _plan.questions[index];
-    messages.addAll(_savedTurns(question));
+    if (_hasSavedDialogue(question.partId)) {
+      messages.addAll(_savedTurns(question));
+    } else {
+      messages.add(_twin(question.promptKey, afterVideo: true));
+    }
     final attempts = snapshots[index].attemptCount;
     final playPrompt = attempts <= 0;
     if (isClosed) return true;
@@ -670,6 +677,10 @@ class GreetingsCubit extends Cubit<GreetingsState> {
           stored.locked || doc?['status'] == AnalyticsConstants.statusCompleted,
       contentOutcome: (doc?['contentOutcome'] as String?)?.trim() ?? '',
     );
+  }
+
+  bool _hasSavedDialogue(String partId) {
+    return _analytics.peekAttempts(partId).isNotEmpty;
   }
 
   List<GreetingsMessage> _savedTurns(GreetingsQuestion question) {

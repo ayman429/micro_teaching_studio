@@ -1,6 +1,7 @@
 import 'package:micro_teaching_studio/features/classroom/classroom_script.dart';
 import 'package:micro_teaching_studio/features/grammar/grammar_script.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
+import 'package:micro_teaching_studio/features/home/data/course_progress_store.dart';
 import 'package:micro_teaching_studio/features/home/models/course_progress.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_word.dart';
 import 'package:micro_teaching_studio/features/presentation/presentation_script.dart';
@@ -155,6 +156,22 @@ class CourseSessions {
     return parts;
   }
 
+  static String? sessionKeyForPart(String partId) {
+    final segments = partId.split('-');
+    if (segments.length < 2) return null;
+    return key(
+      int.tryParse(segments[0]) ?? 0,
+      int.tryParse(segments[1]) ?? 0,
+    );
+  }
+
+  static List<String> quizPartIds(int module, int session) {
+    return [
+      for (final id in partIds(module, session))
+        if (id.endsWith('-quiz')) id,
+    ];
+  }
+
   /// Part documents to unlock so a missed task can be attempted again.
   static List<String> missedPartIds(
     Set<String> pointIds,
@@ -188,13 +205,25 @@ class CourseSessions {
 class LessonReplay {
   static String? _pending;
 
-  static void request(int module, int session) {
-    _pending = CourseSessions.key(module, session);
+  static Future<void> request(
+    CourseProgressStore store,
+    int module,
+    int session,
+  ) async {
+    final sessionKey = CourseSessions.key(module, session);
+    _pending = sessionKey;
+    await store.saveNamed('replay', {sessionKey});
   }
 
-  static bool consume(String sessionKey) {
-    if (_pending != sessionKey) return false;
+  static Future<bool> consume(
+    CourseProgressStore store,
+    String sessionKey,
+  ) async {
+    final stored = store.loadNamed('replay');
+    final matches = _pending == sessionKey || stored.contains(sessionKey);
+    if (!matches) return false;
     _pending = null;
+    await store.saveNamed('replay', {});
     return true;
   }
 }

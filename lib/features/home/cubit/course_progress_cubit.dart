@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:micro_teaching_studio/features/analytics/data/analytics_repository.dart';
+import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_state.dart';
 import 'package:micro_teaching_studio/features/home/data/course_progress_store.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -59,6 +60,39 @@ class CourseProgressCubit extends Cubit<CourseProgressState> {
     final next = {...state.restudiedSessions, key};
     emit(state.copyWith(restudiedSessions: next));
     await _store.saveNamed('restudy', next);
+  }
+
+  /// Clears local score/completion for one session before a full restudy pass.
+  Future<void> resetSessionProgress(int module, int session) async {
+    final tasks = CourseSessions.taskIds(module, session).toSet();
+    final parts = CourseSessions.partIds(module, session).toSet();
+    final nextPoints = state.pointIds.difference(tasks);
+    final nextCompleted = state.completedIds.difference(parts);
+    if (nextPoints.length == state.pointIds.length &&
+        nextCompleted.length == state.completedIds.length) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        pointIds: nextPoints,
+        completedIds: nextCompleted,
+      ),
+    );
+    await _store.saveNamed('points', nextPoints);
+    await _store.save(nextCompleted);
+    try {
+      await _analytics.saveTaskPoints(nextPoints);
+    } catch (error, stack) {
+      log('session progress reset points: $error', stackTrace: stack);
+    }
+  }
+
+  Future<void> requestLessonReplay(int module, int session) {
+    return LessonReplay.request(_store, module, session);
+  }
+
+  Future<bool> consumeLessonReplay(String sessionKey) {
+    return LessonReplay.consume(_store, sessionKey);
   }
 
   bool chatOpened(int module, int session) {

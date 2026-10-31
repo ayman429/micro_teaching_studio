@@ -67,9 +67,17 @@ class VocabCubit extends Cubit<GreetingsState> {
     if (_started) return;
     _started = true;
     _audioSub = _audio.stream.listen(_onAudio);
-    if (LessonReplay.consume(CourseSessions.key(3, 1))) {
+    if (await _progress.consumeLessonReplay(CourseSessions.key(3, 1))) {
       _videoFinished = false;
+      _questionsStarted = false;
+      _onWords = true;
       if (isClosed) return;
+      emit(
+        const GreetingsState(
+          phase: GreetingsPhase.question,
+          videoVisible: false,
+        ),
+      );
       await _askWord(0, playPrompt: true);
       return;
     }
@@ -664,11 +672,17 @@ class VocabCubit extends Cubit<GreetingsState> {
     if (wordIndex < VocabScript.words.length) {
       _onWords = true;
       for (var cursor = 0; cursor < wordIndex; cursor++) {
-        messages
-            .addAll(_savedTurns(VocabScript.words[cursor], afterVideo: false));
+        final prior = VocabScript.words[cursor];
+        if (_hasSavedDialogue(prior.partId)) {
+          messages.addAll(_savedTurns(prior, afterVideo: false));
+        }
       }
       final turn = VocabScript.words[wordIndex];
-      messages.addAll(_savedTurns(turn, afterVideo: false));
+      if (_hasSavedDialogue(turn.partId)) {
+        messages.addAll(_savedTurns(turn, afterVideo: false));
+      } else {
+        messages.add(_twin(turn.promptKey));
+      }
       final attempts = _attemptCount(turn);
       emit(
         state.copyWith(
@@ -729,12 +743,17 @@ class VocabCubit extends Cubit<GreetingsState> {
       return true;
     }
     for (var cursor = 0; cursor < questionIndex; cursor++) {
-      messages.addAll(
-        _savedTurns(VocabScript.questions[cursor], afterVideo: true),
-      );
+      final prior = VocabScript.questions[cursor];
+      if (_hasSavedDialogue(prior.partId)) {
+        messages.addAll(_savedTurns(prior, afterVideo: true));
+      }
     }
     final turn = VocabScript.questions[questionIndex];
-    messages.addAll(_savedTurns(turn, afterVideo: true));
+    if (_hasSavedDialogue(turn.partId)) {
+      messages.addAll(_savedTurns(turn, afterVideo: true));
+    } else {
+      messages.add(_twin(turn.promptKey, afterVideo: true));
+    }
     final attempts = _attemptCount(turn);
     emit(
       state.copyWith(
@@ -776,6 +795,10 @@ class VocabCubit extends Cubit<GreetingsState> {
   int _attemptCount(VocabTurn turn) {
     final count = _analytics.peekStoredState(turn.partId).attemptCount;
     return count < 0 ? 0 : count;
+  }
+
+  bool _hasSavedDialogue(String partId) {
+    return _analytics.peekAttempts(partId).isNotEmpty;
   }
 
   List<GreetingsMessage> _savedTurns(VocabTurn turn,
