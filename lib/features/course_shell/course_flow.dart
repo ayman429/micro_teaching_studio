@@ -8,7 +8,9 @@ import 'package:micro_teaching_studio/features/course_video/cubit/course_video_c
 import 'package:micro_teaching_studio/features/auth/cubit/auth_state.dart';
 import 'package:micro_teaching_studio/common/resources/app_router.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_constants.dart';
+import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_sessions.dart';
+import 'package:micro_teaching_studio/features/course_shell/widgets/course_loading_dialog.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 
 class CourseStep {
@@ -199,6 +201,25 @@ class CourseFlow {
   }
 
   static Future<void> prepareRestudy(
+    BuildContext context, {
+    required int module,
+    required int session,
+    String? videoAsset,
+  }) async {
+    await instance<CourseAudioCubit>().stop();
+    if (!context.mounted) return;
+    await CourseLoadingDialog.run(
+      context: context,
+      task: () => _runRestudy(
+        context,
+        module: module,
+        session: session,
+        videoAsset: videoAsset,
+      ),
+    );
+  }
+
+  static Future<void> _runRestudy(
     BuildContext context, {
     required int module,
     required int session,

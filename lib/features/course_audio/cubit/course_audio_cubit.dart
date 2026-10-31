@@ -89,6 +89,7 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
       await _player.play();
     } catch (error, stack) {
       log('course audio: $error', stackTrace: stack);
+      final sequenceFinished = _onSequenceFinished;
       _sequenceToken++;
       _onSequenceFinished = null;
       _onClipFinished = null;
@@ -102,6 +103,7 @@ class CourseAudioCubit extends Cubit<CourseAudioState> {
           ),
         );
       }
+      sequenceFinished?.call();
     }
   }
 

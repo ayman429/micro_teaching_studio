@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,10 +23,25 @@ Future<void> playSessionInstructions(
   int session, {
   void Function()? onFinished,
 }) {
-  return instance<CourseAudioCubit>().playSequence(
-    AudioAssets.sessionInstructionsSequence(module, session),
-    onFinished: onFinished,
-  );
+  var finished = false;
+  void complete() {
+    if (finished) return;
+    finished = true;
+    onFinished?.call();
+  }
+
+  final assets = AudioAssets.sessionInstructionsSequence(module, session);
+  if (assets.isEmpty) {
+    complete();
+    return Future.value();
+  }
+
+  return instance<CourseAudioCubit>()
+      .playSequence(assets, onFinished: complete)
+      .catchError((Object error, StackTrace stack) {
+    log('session instructions audio: $error', stackTrace: stack);
+    complete();
+  });
 }
 
 class SessionInstructionsPanel extends StatefulWidget {

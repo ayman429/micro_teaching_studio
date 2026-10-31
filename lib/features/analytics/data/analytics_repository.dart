@@ -562,6 +562,7 @@ class AnalyticsRepository {
     await hydrate();
     final uid = _uid;
     final clear = clearStatementsFor.toSet();
+    final partWrites = <_FirestoreWrite>[];
     for (final partId in partIds.toSet()) {
       if (partId.isEmpty) continue;
       final existing = _partDocs[partId];
@@ -571,31 +572,42 @@ class AnalyticsRepository {
       existing['studyRound'] = nextRound;
       if (clear.contains(partId)) existing['statements'] = <dynamic>[];
       if (uid.isEmpty) continue;
-      await _commitOne(
-        _partProgress.doc(_partDocId(uid, partId)),
-        {
-          'studyRound': nextRound,
-          if (clear.contains(partId)) 'statements': <dynamic>[],
-        },
-        merge: true,
-        label: 'archive part',
+      partWrites.add(
+        _FirestoreWrite(
+          ref: _partProgress.doc(_partDocId(uid, partId)),
+          data: {
+            'studyRound': nextRound,
+            if (clear.contains(partId)) 'statements': <dynamic>[],
+          },
+          merge: true,
+        ),
       );
     }
-    if (uid.isEmpty) return;
-    await _commitOne(
-      _userProgress.doc(uid),
-      {
-        ..._identity(uid),
-        'studyRounds': _studyRounds,
-        'updatedAt': FieldValue.serverTimestamp(),
-      },
-      merge: true,
-      label: 'study rounds',
-    );
+    if (uid.isNotEmpty) {
+      try {
+        final writes = [
+          ...partWrites,
+          _FirestoreWrite(
+            ref: _userProgress.doc(uid),
+            data: {
+              ..._identity(uid),
+              'studyRounds': _studyRounds,
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            merge: true,
+          ),
+        ];
+        await _commitMany(writes, label: 'archive restudy');
+      } catch (error, stack) {
+        log('analytics archive: $error', stackTrace: stack);
+        rethrow;
+      }
+    }
   }
 
   Future<void> reopenParts(Iterable<String> partIds) async {
     final uid = _uid;
+    final writes = <_FirestoreWrite>[];
     for (final partId in partIds) {
       final previous = Map<String, dynamic>.from(_partDocs[partId] ?? {});
       previous['locked'] = false;
@@ -607,10 +619,10 @@ class AnalyticsRepository {
       _parts[partId] = _storedFromPart(previous, null);
       _completedIds.remove(partId);
       if (uid.isEmpty) continue;
-      try {
-        await _commitOne(
-          _partProgress.doc(_partDocId(uid, partId)),
-          {
+      writes.add(
+        _FirestoreWrite(
+          ref: _partProgress.doc(_partDocId(uid, partId)),
+          data: {
             'locked': false,
             'status': AnalyticsConstants.statusInProgress,
             'attemptCount': 0,
@@ -619,11 +631,15 @@ class AnalyticsRepository {
             'updatedAt': FieldValue.serverTimestamp(),
           },
           merge: true,
-          label: 'reopen part',
-        );
-      } catch (error, stack) {
-        log('analytics reopen: $error', stackTrace: stack);
-      }
+        ),
+      );
+    }
+    if (uid.isEmpty || writes.isEmpty) return;
+    try {
+      await _commitMany(writes, label: 'reopen parts');
+    } catch (error, stack) {
+      log('analytics reopen: $error', stackTrace: stack);
+      rethrow;
     }
   }
 
@@ -996,9 +1012,24 @@ class AnalyticsRepository {
     bool merge = false,
     required String label,
   }) async {
+    await _commitMany(
+      [
+        _FirestoreWrite(ref: ref, data: data, merge: merge),
+      ],
+      label: label,
+    );
+  }
+
+  Future<void> _commitMany(
+    List<_FirestoreWrite> writes, {
+    required String label,
+  }) async {
+    if (writes.isEmpty) return;
     final writer = _BatchWriter(_firestore);
-    await writer.set(ref, data, merge: merge);
     try {
+      for (final write in writes) {
+        await writer.set(write.ref, write.data, merge: write.merge);
+      }
       await writer.flush();
     } catch (error, stack) {
       log('analytics $label: $error', stackTrace: stack);
@@ -1170,6 +1201,18 @@ class _WordCounts {
       phonemeIncorrect: phonemeIncorrect,
     );
   }
+}
+
+class _FirestoreWrite {
+  const _FirestoreWrite({
+    required this.ref,
+    required this.data,
+    this.merge = false,
+  });
+
+  final DocumentReference<Map<String, dynamic>> ref;
+  final Map<String, dynamic> data;
+  final bool merge;
 }
 
 class _BatchWriter {
