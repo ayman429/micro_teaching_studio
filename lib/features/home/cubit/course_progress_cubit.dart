@@ -95,6 +95,10 @@ class CourseProgressCubit extends Cubit<CourseProgressState> {
     return LessonReplay.consume(_store, sessionKey);
   }
 
+  bool isLessonReplayPending(int module, int session) {
+    return LessonReplay.isPending(_store, CourseSessions.key(module, session));
+  }
+
   bool chatOpened(int module, int session) {
     return state.openedChats.contains('$module-$session');
   }

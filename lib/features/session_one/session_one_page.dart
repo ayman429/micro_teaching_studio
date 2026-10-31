@@ -19,6 +19,7 @@ import 'package:micro_teaching_studio/features/greetings/cubit/greetings_cubit.d
 import 'package:micro_teaching_studio/features/greetings/greetings_page.dart';
 import 'package:micro_teaching_studio/features/quiz/cubit/quiz_cubit.dart';
 import 'package:micro_teaching_studio/features/quiz/widgets/quiz_card.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_gate.dart';
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 
 class SessionOnePage extends StatefulWidget {
@@ -89,21 +90,20 @@ class _SessionOneBodyState extends State<_SessionOneBody> {
         return;
       }
       if (_tab != 0) return;
-      _playInstructions();
+      _beginInstructions();
     });
   }
 
-  void _playInstructions() {
-    setState(() => _instructionsReady = false);
-    unawaited(
-      playSessionInstructions(
-        2,
-        1,
-        onFinished: () {
-          if (!mounted) return;
-          setState(() => _instructionsReady = true);
-        },
-      ),
+  void _beginInstructions() {
+    scheduleSessionInstructionGate(
+      module: 2,
+      session: 1,
+      progress: context.read<CourseProgressCubit>(),
+      setReady: (ready) {
+        if (!mounted) return;
+        setState(() => _instructionsReady = ready);
+      },
+      isMounted: () => mounted,
     );
   }
 

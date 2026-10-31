@@ -868,11 +868,9 @@ class VocabCubit extends Cubit<GreetingsState> {
 
   @override
   Future<void> close() async {
-    final stopAudio = _visible;
     _visible = false;
     _cue = _Cue.none;
     await _audioSub?.cancel();
-    if (stopAudio) await _audio.stop();
     await _engine.dispose();
     return super.close();
   }

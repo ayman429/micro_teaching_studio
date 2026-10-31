@@ -24,6 +24,7 @@ import 'package:micro_teaching_studio/features/greetings/greetings_page.dart';
 import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pronunciation_engine.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_gate.dart';
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 
 class GrammarSessionPage extends StatefulWidget {
@@ -96,17 +97,16 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
   var _lessonStarted = false;
   var _instructionsReady = false;
 
-  void _playInstructions() {
-    setState(() => _instructionsReady = false);
-    unawaited(
-      playSessionInstructions(
-        3,
-        2,
-        onFinished: () {
-          if (!mounted) return;
-          setState(() => _instructionsReady = true);
-        },
-      ),
+  void _beginInstructions() {
+    scheduleSessionInstructionGate(
+      module: 3,
+      session: 2,
+      progress: context.read<CourseProgressCubit>(),
+      setReady: (ready) {
+        if (!mounted) return;
+        setState(() => _instructionsReady = ready);
+      },
+      isMounted: () => mounted,
     );
   }
   var _switching = false;
@@ -123,7 +123,7 @@ class _GrammarSessionBodyState extends State<_GrammarSessionBody> {
         return;
       }
       if (_tab != 0) return;
-      _playInstructions();
+      _beginInstructions();
     });
   }
 

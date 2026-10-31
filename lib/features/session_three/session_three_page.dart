@@ -22,6 +22,7 @@ import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pro
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
 import 'package:micro_teaching_studio/features/vocabulary/cubit/vocab_cubit.dart';
 import 'package:micro_teaching_studio/features/vocabulary/cubit/vocab_quiz_cubit.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_gate.dart';
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 import 'package:micro_teaching_studio/features/vocabulary/vocab_page.dart';
 import 'package:micro_teaching_studio/features/vocabulary/widgets/vocab_quiz_card.dart';
@@ -110,21 +111,20 @@ class _SessionThreeBodyState extends State<_SessionThreeBody> {
         return;
       }
       if (_tab != 0) return;
-      _playInstructions();
+      _beginInstructions();
     });
   }
 
-  void _playInstructions() {
-    setState(() => _instructionsReady = false);
-    unawaited(
-      playSessionInstructions(
-        3,
-        1,
-        onFinished: () {
-          if (!mounted) return;
-          setState(() => _instructionsReady = true);
-        },
-      ),
+  void _beginInstructions() {
+    scheduleSessionInstructionGate(
+      module: 3,
+      session: 1,
+      progress: context.read<CourseProgressCubit>(),
+      setReady: (ready) {
+        if (!mounted) return;
+        setState(() => _instructionsReady = ready);
+      },
+      isMounted: () => mounted,
     );
   }
 

@@ -13,6 +13,8 @@ import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/analytics/models/assessment_part_context.dart';
 import 'package:micro_teaching_studio/features/course_audio/cubit/course_audio_cubit.dart';
 import 'package:micro_teaching_studio/features/course_shell/course_flow.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_gate.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaffold.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/session_end_bar.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/session_score_line.dart';
@@ -46,14 +48,18 @@ class _FluencyPageState extends State<FluencyPage> {
   }
 
   void _playInstructions() {
-    setState(() => _instructionsReady = false);
-    unawaited(
-      instance<CourseAudioCubit>().playSequence(
+    scheduleSessionInstructionGate(
+      module: 1,
+      session: 1,
+      progress: context.read<CourseProgressCubit>(),
+      setReady: (ready) {
+        if (!mounted) return;
+        setState(() => _instructionsReady = ready);
+      },
+      isMounted: () => mounted,
+      play: (onFinished) => instance<CourseAudioCubit>().playSequence(
         AudioAssets.fluencyInstructionsSequence(),
-        onFinished: () {
-          if (!mounted) return;
-          setState(() => _instructionsReady = true);
-        },
+        onFinished: onFinished,
       ),
     );
   }

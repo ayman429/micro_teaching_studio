@@ -24,6 +24,7 @@ import 'package:micro_teaching_studio/features/presentation/presentation_script.
 import 'package:micro_teaching_studio/features/presentation/widgets/presentation_quiz_card.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/pronunciation_engine.dart';
 import 'package:micro_teaching_studio/features/pronunciation_assessment/data/speech_config_repository.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_gate.dart';
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 
 class PresentationSessionPage extends StatefulWidget {
@@ -98,17 +99,16 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
   var _lessonStarted = false;
   var _instructionsReady = false;
 
-  void _playInstructions() {
-    setState(() => _instructionsReady = false);
-    unawaited(
-      playSessionInstructions(
-        3,
-        3,
-        onFinished: () {
-          if (!mounted) return;
-          setState(() => _instructionsReady = true);
-        },
-      ),
+  void _beginInstructions() {
+    scheduleSessionInstructionGate(
+      module: 3,
+      session: 3,
+      progress: context.read<CourseProgressCubit>(),
+      setReady: (ready) {
+        if (!mounted) return;
+        setState(() => _instructionsReady = ready);
+      },
+      isMounted: () => mounted,
     );
   }
   var _switching = false;
@@ -125,7 +125,7 @@ class _PresentationSessionBodyState extends State<_PresentationSessionBody> {
         return;
       }
       if (_tab != 0) return;
-      _playInstructions();
+      _beginInstructions();
     });
   }
 

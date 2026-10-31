@@ -355,7 +355,6 @@ class VocabQuizCubit extends Cubit<VocabQuizState> {
 
   @override
   Future<void> close() async {
-    final stopAudio = _visible;
     _visible = false;
     if (state.recording) {
       try {
@@ -363,7 +362,6 @@ class VocabQuizCubit extends Cubit<VocabQuizState> {
       } catch (_) {}
     }
     await _engine.dispose();
-    if (stopAudio) await _audio.stop();
     return super.close();
   }
 }

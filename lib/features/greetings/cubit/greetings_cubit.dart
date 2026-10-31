@@ -295,7 +295,7 @@ class GreetingsCubit extends Cubit<GreetingsState> {
       _pending = accepted
           ? (last ? _Pending.reflect : _Pending.advance)
           : (exhausted
-              ? (last ? _Pending.finish : _Pending.advance)
+              ? (last ? _Pending.reflect : _Pending.advance)
               : _Pending.retry);
       final feedbackKey = accepted
           ? (improve
@@ -621,9 +621,7 @@ class GreetingsCubit extends Cubit<GreetingsState> {
       for (final question in _plan.questions) {
         messages.addAll(_savedTurns(question));
       }
-      if (snapshots.last.answeredCorrectly) {
-        messages.add(_twin(_plan.reflectionKey, afterVideo: true));
-      }
+      messages.add(_twin(_plan.reflectionKey, afterVideo: true));
       if (isClosed) return true;
       emit(
         state.copyWith(
@@ -817,7 +815,6 @@ class GreetingsCubit extends Cubit<GreetingsState> {
   Future<void> close() async {
     _audioCue = _AudioCue.none;
     await _audioSub?.cancel();
-    await _audio.stop();
     await _engine.dispose();
     return super.close();
   }

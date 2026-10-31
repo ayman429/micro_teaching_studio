@@ -165,9 +165,7 @@ class GrammarQuizCubit extends Cubit<ClassroomQuizState> {
 
   @override
   Future<void> close() async {
-    final stopAudio = _visible;
     _visible = false;
-    if (stopAudio) await _audio.stop();
     return super.close();
   }
 }

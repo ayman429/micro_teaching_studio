@@ -226,4 +226,8 @@ class LessonReplay {
     await store.saveNamed('replay', {});
     return true;
   }
+
+  static bool isPending(CourseProgressStore store, String sessionKey) {
+    return _pending == sessionKey || store.loadNamed('replay').contains(sessionKey);
+  }
 }

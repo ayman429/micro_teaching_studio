@@ -17,6 +17,8 @@ import 'package:micro_teaching_studio/features/course_shell/widgets/course_scaff
 import 'package:micro_teaching_studio/features/course_shell/widgets/session_end_bar.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/session_score_line.dart';
 import 'package:micro_teaching_studio/features/course_shell/widgets/course_segmented_tabs.dart';
+import 'package:micro_teaching_studio/features/home/cubit/course_progress_cubit.dart';
+import 'package:micro_teaching_studio/features/session_instructions/session_instructions_gate.dart';
 import 'package:micro_teaching_studio/features/session_instructions/session_instructions_panel.dart';
 import 'package:micro_teaching_studio/features/phonics/models/phonics_word.dart';
 import 'package:micro_teaching_studio/features/phonics/widgets/phonics_banner.dart';
@@ -44,21 +46,20 @@ class _PhonicsPageState extends State<PhonicsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _tab != 0) return;
-      _playInstructions();
+      _beginInstructions();
     });
   }
 
-  void _playInstructions() {
-    setState(() => _instructionsReady = false);
-    unawaited(
-      playSessionInstructions(
-        1,
-        2,
-        onFinished: () {
-          if (!mounted) return;
-          setState(() => _instructionsReady = true);
-        },
-      ),
+  void _beginInstructions() {
+    scheduleSessionInstructionGate(
+      module: 1,
+      session: 2,
+      progress: context.read<CourseProgressCubit>(),
+      setReady: (ready) {
+        if (!mounted) return;
+        setState(() => _instructionsReady = ready);
+      },
+      isMounted: () => mounted,
     );
   }
 
@@ -72,7 +73,7 @@ class _PhonicsPageState extends State<PhonicsPage> {
       _instructionsReady = false;
       _clipReady = false;
     });
-    _playInstructions();
+    _beginInstructions();
   }
 
   @override
