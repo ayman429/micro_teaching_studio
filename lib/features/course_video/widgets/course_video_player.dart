@@ -37,6 +37,9 @@ class CourseVideoPlayer extends StatelessWidget {
     this.onPlaybackStarted,
     this.handle,
     this.limitPlays = false,
+    this.fit = BoxFit.cover,
+    this.aspectRatio,
+    this.maxHeight,
   });
 
   final String asset;
@@ -46,6 +49,12 @@ class CourseVideoPlayer extends StatelessWidget {
   final VoidCallback? onPlaybackStarted;
   final CourseVideoHandle? handle;
   final bool limitPlays;
+  final BoxFit fit;
+
+  /// Width / height of the video frame. When null the frame uses
+  /// [AppSize.videoPlayerHeight].
+  final double? aspectRatio;
+  final double? maxHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +70,9 @@ class CourseVideoPlayer extends StatelessWidget {
         onCompleted: onCompleted,
         onPlaybackStarted: onPlaybackStarted,
         limitPlays: limitPlays,
+        fit: fit,
+        aspectRatio: aspectRatio,
+        maxHeight: maxHeight,
       ),
     );
   }
@@ -73,6 +85,9 @@ class _CourseVideoCard extends StatefulWidget {
     this.onCompleted,
     this.onPlaybackStarted,
     this.limitPlays = false,
+    this.fit = BoxFit.cover,
+    this.aspectRatio,
+    this.maxHeight,
   });
 
   final String introLabel;
@@ -80,6 +95,9 @@ class _CourseVideoCard extends StatefulWidget {
   final VoidCallback? onCompleted;
   final VoidCallback? onPlaybackStarted;
   final bool limitPlays;
+  final BoxFit fit;
+  final double? aspectRatio;
+  final double? maxHeight;
 
   @override
   State<_CourseVideoCard> createState() => _CourseVideoCardState();
@@ -153,9 +171,9 @@ class _CourseVideoCardState extends State<_CourseVideoCard>
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadius.r18.r),
-                  child: SizedBox(
-                    height: AppSize.videoPlayerHeight.h,
-                    width: double.infinity,
+                  child: _VideoFrame(
+                    aspectRatio: widget.aspectRatio,
+                    maxHeight: widget.maxHeight,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () {
@@ -200,7 +218,10 @@ class _CourseVideoCardState extends State<_CourseVideoCard>
                               if (!video.isReady || controller == null) {
                                 return const SizedBox.shrink();
                               }
-                              return _CoverVideo(controller: controller);
+                              return _FittedVideo(
+                                controller: controller,
+                                fit: widget.fit,
+                              );
                             },
                           ),
                           BlocBuilder<CourseVideoCubit, CourseVideoState>(
@@ -362,10 +383,47 @@ class _CourseVideoCardState extends State<_CourseVideoCard>
   }
 }
 
-class _CoverVideo extends StatelessWidget {
-  const _CoverVideo({required this.controller});
+class _VideoFrame extends StatelessWidget {
+  const _VideoFrame({
+    required this.child,
+    this.aspectRatio,
+    this.maxHeight,
+  });
+
+  final Widget child;
+  final double? aspectRatio;
+  final double? maxHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = aspectRatio;
+    if (ratio == null) {
+      return SizedBox(
+        height: AppSize.videoPlayerHeight.h,
+        width: double.infinity,
+        child: child,
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var height = constraints.maxWidth / ratio;
+        final limit = maxHeight;
+        if (limit != null && height > limit) height = limit;
+        return SizedBox(
+          height: height,
+          width: double.infinity,
+          child: child,
+        );
+      },
+    );
+  }
+}
+
+class _FittedVideo extends StatelessWidget {
+  const _FittedVideo({required this.controller, required this.fit});
 
   final VideoPlayerController controller;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -375,7 +433,7 @@ class _CoverVideo extends StatelessWidget {
       child: IgnorePointer(
         child: SizedBox.expand(
           child: FittedBox(
-            fit: BoxFit.cover,
+            fit: fit,
             clipBehavior: Clip.hardEdge,
             child: SizedBox(
               width: size.width,

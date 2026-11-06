@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:micro_teaching_studio/common/resources/assets_manager.dart';
+import 'package:micro_teaching_studio/common/resources/values_manager.dart';
 import 'package:micro_teaching_studio/features/course_video/widgets/course_video_player.dart';
 
 class HelpVideoCard extends StatelessWidget {
@@ -7,6 +8,12 @@ class HelpVideoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CourseVideoPlayer(asset: VideoAssets.help());
+    return CourseVideoPlayer(
+      asset: VideoAssets.help(),
+      fit: BoxFit.contain,
+      aspectRatio: AppSize.helpVideoAspectRatio,
+      maxHeight: MediaQuery.sizeOf(context).height *
+          AppSize.helpVideoMaxScreenFraction,
+    );
   }
 }

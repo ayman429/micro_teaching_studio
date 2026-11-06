@@ -46,6 +46,8 @@ class AppSize {
   static const double avatarThumb = 40;
   static const double stepPillWidth = 24;
   static const double videoPlayerHeight = 181;
+  static const double helpVideoAspectRatio = 9 / 16;
+  static const double helpVideoMaxScreenFraction = 0.6;
   static const double voiceBadgeHeight = 23;
 }
 
